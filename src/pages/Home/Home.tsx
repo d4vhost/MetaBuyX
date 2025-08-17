@@ -1,498 +1,327 @@
 // src/pages/Home.tsx
 
 import { motion, type Variants } from "framer-motion";
-import { ArrowRight, Users, Wallet, CheckSquare } from "lucide-react";
-
-// Importa los estilos desde un archivo CSS externo.
+import { ArrowRight, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import "./home.css";
 
-// Define la interfaz para las props, esto es crucial para evitar errores de TypeScript.
-interface FeatureCardProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  delay: number;
-}
+// Iconos minimalistas
+const WalletIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a2 2 0 0 1 0 4H5a2 2 0 0 1 0 4h13a1 1 0 0 0 1-1v-3"></path>
+    <path d="M16 12h2"></path>
+  </svg>
+);
 
-// Componente para las tarjetas de características con su propio estado de animación
-const FeatureCard = ({ icon, title, description, delay }: FeatureCardProps) => {
-  const cardVariants: Variants = {
-    hidden: { opacity: 0, y: 30, scale: 0.95 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: { 
-        duration: 0.8, 
-        ease: [0.25, 0.46, 0.45, 0.94], 
-        delay 
-      },
+const SearchIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8"></circle>
+    <path d="m21 21-4.35-4.35"></path>
+  </svg>
+);
+
+const CollaborateIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <circle cx="8.5" cy="7" r="4"></circle>
+    <path d="M20 8v6M23 11h-6"></path>
+  </svg>
+);
+
+// Datos para las demos
+const checklistItems = [
+  { text: "MacBook Pro 16\"", price: "$2,499", completed: true },
+  { text: "AirPods Pro", price: "$249", completed: true },
+  { text: "Monitor 4K", price: "$599", completed: false },
+  { text: "Escritorio Standing", price: "$899", completed: false }
+];
+
+const goalItems = [
+  { title: "Viaje a Tokio", amount: "$3,200", progress: 78 },
+  { title: "Curso de Programación", amount: "$449", progress: 45 },
+  { title: "Cámara Profesional", amount: "$1,899", progress: 23 }
+];
+
+const ChecklistItem = ({ text, price, completed, delay }: { text: string; price: string; completed?: boolean; delay: number }) => (
+  <motion.div
+    className={`checklist-item ${completed ? 'completed' : ''}`}
+    initial={{ opacity: 0, x: -16 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ delay, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+  >
+    <div className={`checkbox ${completed ? 'checked' : ''}`}>
+      {completed && <div className="check-mark" />}
+    </div>
+    <span className="item-text">{text}</span>
+    <span className="item-price">{price}</span>
+  </motion.div>
+);
+
+const GoalItem = ({ title, amount, progress, delay }: { title: string; amount: string; progress: number; delay: number }) => (
+  <motion.div
+    className="goal-item"
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+    whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+  >
+    <div className="goal-header">
+      <span className="goal-title">{title}</span>
+      <span className="goal-amount">{amount}</span>
+    </div>
+    <div className="goal-progress">
+      <motion.div 
+        className="goal-progress-fill"
+        initial={{ width: "0%" }}
+        animate={{ width: `${progress}%` }}
+        transition={{ duration: 1.5, ease: [0.25, 0.46, 0.45, 0.94], delay: delay + 0.3 }}
+      />
+    </div>
+    <div className="goal-percentage">{progress}% completado</div>
+  </motion.div>
+);
+
+const AnimatedDemoCards = () => {
+  const [currentCard, setCurrentCard] = useState(0);
+
+  const demoCards = [
+    {
+      title: "Mi Lista de Trabajo",
+      type: "checklist",
+      content: (
+        <div className="demo-content">
+          {checklistItems.map((item: { text: string; price: string; completed: boolean }, index: number) => (
+            <ChecklistItem
+              key={item.text}
+              {...item}
+              delay={0.1 + (index * 0.1)}
+            />
+          ))}
+        </div>
+      )
     },
-  };
+    {
+      title: "Progreso Visual",
+      type: "progress",
+      content: (
+        <div className="progress-demo">
+          <div className="progress-header">
+            <span>iPhone 16 Pro</span>
+            <span>$1,199</span>
+          </div>
+          <div className="progress-container">
+            <motion.div
+              className="progress-fill"
+              initial={{ width: "0%" }}
+              animate={{ width: "72%" }}
+              transition={{ duration: 2, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.5 }}
+            />
+          </div>
+          <div className="progress-details">
+            <span>$863 ahorrados</span>
+            <span>72%</span>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Mis Objetivos",
+      type: "goals",
+      content: (
+        <div className="goals-list">
+          {goalItems.map((goal: { title: string; amount: string; progress: number }, index: number) => (
+            <GoalItem
+              key={goal.title}
+              {...goal}
+              delay={0.1 + (index * 0.1)}
+            />
+          ))}
+        </div>
+      )
+    }
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentCard((prev) => (prev + 1) % demoCards.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [demoCards.length]);
 
   return (
-    <motion.div 
-      variants={cardVariants} 
-      className="feature-card"
-      whileHover={{ 
-        y: -12,
-        scale: 1.02,
-        transition: { duration: 0.3, ease: "easeOut" }
-      }}
-    >
-      <div className="feature-icon-wrapper">
-        <div className="feature-icon">{icon}</div>
-        <div className="icon-glow"></div>
+    <div className="demo-card-wrapper">
+      <motion.div 
+        className="demo-card"
+        key={currentCard}
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
+        <h4 className="demo-title">{demoCards[currentCard].title}</h4>
+        {demoCards[currentCard].content}
+      </motion.div>
+      
+      <div className="demo-indicators">
+        {demoCards.map((_, index) => (
+          <motion.button
+            key={index}
+            className={`demo-indicator ${index === currentCard ? 'active' : ''}`}
+            onClick={() => setCurrentCard(index)}
+            whileHover={{ scale: 1.2 }}
+            whileTap={{ scale: 0.9 }}
+          />
+        ))}
       </div>
-      <h3>{title}</h3>
-      <p>{description}</p>
-      <div className="card-shine"></div>
-    </motion.div>
+    </div>
   );
 };
 
 function Home() {
-  // --- Variantes de Animación ---
-  const staggerContainer: Variants = {
-    hidden: {},
-    visible: {
-      transition: {
-        staggerChildren: 0.18,
-      },
-    },
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    navigate('/login');
   };
 
-  const fadeInUp: Variants = {
-    hidden: { opacity: 0, y: 30, filter: "blur(8px)" },
-    visible: {
-      opacity: 1,
-      y: 0,
-      filter: "blur(0px)",
-      transition: { duration: 1, ease: [0.25, 0.46, 0.45, 0.94] },
+  const animations: { [key: string]: Variants } = {
+    container: {
+      hidden: {},
+      visible: { transition: { staggerChildren: 0.1, delayChildren: 0.3 } }
     },
-  };
-
-  const liquidScale: Variants = {
-    hidden: { scale: 0.8, opacity: 0, filter: "blur(12px)" },
-    visible: {
-      scale: 1,
-      opacity: 1,
-      filter: "blur(0px)",
-      transition: { duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] },
+    fadeInUp: {
+      hidden: { opacity: 0, y: 40 },
+      visible: {
+        opacity: 1, y: 0,
+        transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }
+      }
     },
+    scaleIn: {
+      hidden: { scale: 0.95, opacity: 0 },
+      visible: {
+        scale: 1, opacity: 1,
+        transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }
+      }
+    }
   };
 
   return (
     <div className="home-wrapper">
-      {/* Navbar con efecto glassmorphism */}
+      {/* Navigation */}
       <nav className="navbar">
         <div className="nav-content">
-          <div className="logo">
-            <span className="logo-text">MetaBuyX</span>
-            <div className="logo-reflection"></div>
+          <div className="nav-brand">
+            <Sparkles className="brand-icon" size={20} />
+            <span className="brand-text">MetaBuyX</span>
           </div>
           <motion.button
             className="btn-primary"
-            whileHover={{ 
-              scale: 1.05, 
-              boxShadow: "0 8px 32px rgba(59, 130, 246, 0.25)",
-              backdropFilter: "blur(24px)"
-            }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleGetStarted}
           >
-            ¡Comenzar!
-            <div className="btn-shine"></div>
+            Comenzar
           </motion.button>
         </div>
-        <div className="navbar-blur"></div>
       </nav>
 
+      {/* Main Content */}
       <motion.div
-        variants={staggerContainer}
+        variants={animations.container}
         initial="hidden"
         animate="visible"
-        className="home-container"
+        className="main-container"
       >
-        {/* --- Sección Hero con efectos líquidos --- */}
-        <motion.header variants={fadeInUp} className="home-hero">
-          <div className="hero-background">
-            <div className="liquid-orb orb-1"></div>
-            <div className="liquid-orb orb-2"></div>
-            <div className="liquid-orb orb-3"></div>
+        {/* Hero Section with Side Layout */}
+        <section className="hero-section-split">
+          <div className="hero-content-left">
+            <motion.div variants={animations.fadeInUp}>
+              <h1 className="hero-title">
+                ¿Imposible?<br />
+                <span className="hero-title-accent">Posible.</span>
+              </h1>
+              <p className="hero-subtitle">
+                Tu asistente inteligente para convertir sueños en planes alcanzables
+              </p>
+              <div className="hero-features">
+                <div className="hero-feature">
+                  <WalletIcon />
+                  <span>Simulación Inteligente</span>
+                </div>
+                <div className="hero-feature">
+                  <SearchIcon />
+                  <span>Búsqueda Avanzada</span>
+                </div>
+                <div className="hero-feature">
+                  <CollaborateIcon />
+                  <span>Objetivos Compartidos</span>
+                </div>
+              </div>
+              <motion.button
+                variants={animations.scaleIn}
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="btn-cta"
+                onClick={handleGetStarted}
+              >
+                <span>Crear mi primer plan</span>
+                <ArrowRight size={16} />
+              </motion.button>
+            </motion.div>
           </div>
           
-          <h1 className="hero-title">
-            Planifica, Ahorra, <span className="gradient-text">Conquista</span>.
-            <div className="title-reflection"></div>
-          </h1>
-          
-          <p className="hero-subtitle">
-            MetaBuyX es tu socio inteligente para alcanzar cualquier meta de compra.
-            Simula tu ahorro, organiza tus objetivos y haz realidad tus sueños, solo o en equipo.
-          </p>
-          
-          <motion.button
-            variants={liquidScale}
-            whileHover={{ 
-              scale: 1.08, 
-              boxShadow: "0px 16px 48px rgba(59, 130, 246, 0.4)",
-              backdropFilter: "blur(24px)"
-            }}
-            whileTap={{ scale: 0.95 }}
-            className="btn-cta"
+          <motion.div 
+            className="hero-demo-right"
+            variants={animations.scaleIn}
           >
-            <span>Empieza tu plan ahora</span>
-            <ArrowRight size={20} />
-            <div className="btn-liquid-bg"></div>
-            <div className="btn-shine-effect"></div>
-          </motion.button>
-        </motion.header>
-
-        {/* --- Sección de Características con Glass Effect --- */}
-        <motion.section
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-          className="features-section"
-        >
-          <motion.h2 variants={fadeInUp} className="section-title">
-            Todo lo que necesitas para alcanzar tus metas
-            <div className="title-glass-bg"></div>
-          </motion.h2>
-          
-          <div className="features-grid">
-            <FeatureCard
-              icon={<Wallet size={32} />}
-              title="Simulación de Ahorros"
-              description="Simula tus depósitos y observa cómo se acumula tu progreso hacia cualquier meta. Desde gadgets hasta viajes, cada centavo cuenta."
-              delay={0.1}
-            />
-            <FeatureCard
-              icon={<CheckSquare size={32} />}
-              title="Buscador Inteligente"
-              description="Encuentra productos con nuestro buscador que te sugiere opciones al escribir. Si no lo encuentras, agrégalo manualmente con su precio."
-              delay={0.25}
-            />
-            <FeatureCard
-              icon={<Users size={32} />}
-              title="Metas Colaborativas"
-              description="Comparte objetivos con amigos o familiares. Planifiquen juntos ese viaje soñado o ese regalo especial que quieren conseguir."
-              delay={0.4}
-            />
-          </div>
-        </motion.section>
-
-        {/* --- Secciones con Windows Glassmorphism --- */}
-        <motion.section
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.5 }}
-          className="simulation-section"
-        >
-          <motion.div variants={fadeInUp} className="simulation-text">
-            <h2 className="section-title">Organiza tus compras como una lista</h2>
-            <p>
-              Crea listas de todo lo que necesitas comprar. Marca cada elemento conforme 
-              lo adquieras y mantén un control visual de tu progreso de compras.
-            </p>
+            <AnimatedDemoCards />
           </motion.div>
-          
-          <motion.div variants={liquidScale} className="simulation-visual">
-            <div className="glass-window">
-              <div className="glass-header">
-                <div className="traffic-lights">
-                  <div className="dot red"></div>
-                  <div className="dot yellow"></div>
-                  <div className="dot green"></div>
-                </div>
-              </div>
-              
-              <div className="glass-content">
-                <h4 className="window-title">Lista de Compras</h4>
-                <div className="checklist">
-                  <motion.div 
-                    className="checklist-item completed"
-                    initial={{ opacity: 0, x: -20, filter: "blur(4px)" }}
-                    whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-                    transition={{ delay: 0.2, duration: 0.6 }}
-                  >
-                    <div className="glass-checkbox checked">
-                      <div className="check-mark"></div>
-                    </div>
-                    <span>iPhone 16 - $800</span>
-                    <div className="item-shine"></div>
-                  </motion.div>
-                  
-                  <motion.div 
-                    className="checklist-item completed"
-                    initial={{ opacity: 0, x: -20, filter: "blur(4px)" }}
-                    whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-                    transition={{ delay: 0.35, duration: 0.6 }}
-                  >
-                    <div className="glass-checkbox checked">
-                      <div className="check-mark"></div>
-                    </div>
-                    <span>Mouse Gaming - $45</span>
-                    <div className="item-shine"></div>
-                  </motion.div>
-                  
-                  <motion.div 
-                    className="checklist-item"
-                    initial={{ opacity: 0, x: -20, filter: "blur(4px)" }}
-                    whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-                    transition={{ delay: 0.5, duration: 0.6 }}
-                  >
-                    <div className="glass-checkbox">
-                      <div className="checkbox-glow"></div>
-                    </div>
-                    <span>Auriculares - $120</span>
-                    <div className="item-shine"></div>
-                  </motion.div>
-                  
-                  <motion.div 
-                    className="checklist-item"
-                    initial={{ opacity: 0, x: -20, filter: "blur(4px)" }}
-                    whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-                    transition={{ delay: 0.65, duration: 0.6 }}
-                  >
-                    <div className="glass-checkbox">
-                      <div className="checkbox-glow"></div>
-                    </div>
-                    <span>Laptop - $1200</span>
-                    <div className="item-shine"></div>
-                  </motion.div>
-                </div>
-              </div>
-              
-              <div className="window-reflection"></div>
-              <div className="window-border-glow"></div>
-            </div>
-          </motion.div>
-        </motion.section>
-
-        {/* --- Progreso con Liquid Glass --- */}
-        <motion.section
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.5 }}
-          className="simulation-section reverse"
-        >
-          <motion.div variants={liquidScale} className="simulation-visual">
-            <div className="glass-window">
-              <div className="glass-header">
-                <div className="traffic-lights">
-                  <div className="dot red"></div>
-                  <div className="dot yellow"></div>
-                  <div className="dot green"></div>
-                </div>
-              </div>
-              
-              <div className="glass-content">
-                <p className="window-product-name">iPhone 16</p>
-                <div className="liquid-progress-container">
-                  <motion.div
-                    className="liquid-progress-fill"
-                    initial={{ width: "5%" }}
-                    whileInView={{ width: "65%" }}
-                    viewport={{ once: true, amount: 0.8 }}
-                    transition={{ duration: 2.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  >
-                    <div className="progress-liquid-wave"></div>
-                    <div className="progress-shine"></div>
-                  </motion.div>
-                  <div className="progress-track-glow"></div>
-                </div>
-                <div className="progress-details">
-                  <span>$520 / $800</span>
-                  <span>65%</span>
-                </div>
-              </div>
-              
-              <div className="window-reflection"></div>
-              <div className="window-border-glow"></div>
-            </div>
-          </motion.div>
-          
-          <motion.div variants={fadeInUp} className="simulation-text">
-            <h2 className="section-title">Progreso visual que motiva</h2>
-            <p>
-              Observa en tiempo real cómo cada depósito simulado te acerca más a tu objetivo. 
-              La barra de progreso te mantiene motivado y enfocado en tu meta.
-            </p>
-          </motion.div>
-        </motion.section>
-
-        {/* --- Todo List con Glass Effect --- */}
-        <motion.section
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.5 }}
-          className="simulation-section"
-        >
-          <motion.div variants={fadeInUp} className="simulation-text">
-            <h2 className="section-title">Planifica como un profesional</h2>
-            <p>
-              Organiza todas tus metas en listas inteligentes. Desde compras diarias 
-              hasta grandes objetivos, todo en un solo lugar y completamente organizado.
-            </p>
-          </motion.div>
-          
-          <motion.div variants={liquidScale} className="simulation-visual">
-            <div className="glass-window">
-              <div className="glass-header">
-                <div className="traffic-lights">
-                  <div className="dot red"></div>
-                  <div className="dot yellow"></div>
-                  <div className="dot green"></div>
-                </div>
-              </div>
-              
-              <div className="glass-content">
-                <h4 className="window-title">Mis Objetivos</h4>
-                <div className="todo-list-glass">
-                  <motion.div 
-                    className="todo-item-glass priority-high"
-                    initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
-                    whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                    transition={{ delay: 0.2, duration: 0.7 }}
-                    whileHover={{ scale: 1.02, y: -2 }}
-                  >
-                    <div className="priority-indicator high"></div>
-                    <div className="todo-content-glass">
-                      <span className="todo-title">Viaje a París</span>
-                      <span className="todo-amount">$2,500</span>
-                    </div>
-                    <div className="todo-item-glow"></div>
-                  </motion.div>
-                  
-                  <motion.div 
-                    className="todo-item-glass priority-medium"
-                    initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
-                    whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                    transition={{ delay: 0.35, duration: 0.7 }}
-                    whileHover={{ scale: 1.02, y: -2 }}
-                  >
-                    <div className="priority-indicator medium"></div>
-                    <div className="todo-content-glass">
-                      <span className="todo-title">Nueva Laptop</span>
-                      <span className="todo-amount">$1,200</span>
-                    </div>
-                    <div className="todo-item-glow"></div>
-                  </motion.div>
-                  
-                  <motion.div 
-                    className="todo-item-glass priority-low"
-                    initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
-                    whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                    transition={{ delay: 0.5, duration: 0.7 }}
-                    whileHover={{ scale: 1.02, y: -2 }}
-                  >
-                    <div className="priority-indicator low"></div>
-                    <div className="todo-content-glass">
-                      <span className="todo-title">Curso Online</span>
-                      <span className="todo-amount">$299</span>
-                    </div>
-                    <div className="todo-item-glow"></div>
-                  </motion.div>
-                </div>
-              </div>
-              
-              <div className="window-reflection"></div>
-              <div className="window-border-glow"></div>
-            </div>
-          </motion.div>
-        </motion.section>
-
-        {/* --- CTA Final con Liquid Glass --- */}
-        <motion.section
-          initial={{ opacity: 0, scale: 0.95, filter: "blur(8px)" }}
-          whileInView={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="final-cta-section"
-        >
-          <div className="cta-glass-bg">
-            <div className="cta-orb-1"></div>
-            <div className="cta-orb-2"></div>
-          </div>
-          
-          <h2 className="section-title">¿Listo para alcanzar todas tus metas?</h2>
-          <p>Crea tu cuenta gratis y comienza a simular tus ahorros hoy mismo.</p>
-          
-          <motion.button
-            whileHover={{ 
-              scale: 1.08,
-              boxShadow: "0px 20px 60px rgba(59, 130, 246, 0.5)"
-            }}
-            whileTap={{ scale: 0.95 }}
-            className="btn-cta"
-          >
-            <span>¡Únete a MetaBuyX!</span>
-            <div className="btn-liquid-bg"></div>
-            <div className="btn-shine-effect"></div>
-          </motion.button>
-          
-          <div className="cta-reflection"></div>
-        </motion.section>
-
+        </section>
       </motion.div>
 
-      {/* Footer con Glass Effect */}
-      <footer className="footer-glass">
-        <div className="footer-content-glass">
-          <div className="footer-brand-glass">
-            <h3 className="footer-logo-glass">
-              MetaBuyX
-              <div className="logo-glass-effect"></div>
-            </h3>
-            <p className="footer-description-glass">
-              Tu socio inteligente para alcanzar cualquier meta de compra.
-            </p>
-            <div className="footer-social-glass">
-              <a href="#" aria-label="Twitter" className="social-glass-btn">📱</a>
-              <a href="#" aria-label="Instagram" className="social-glass-btn">📧</a>
-              <a href="#" aria-label="LinkedIn" className="social-glass-btn">💬</a>
+      {/* Footer */}
+      <footer className="footer">
+        <div className="footer-content">
+          <div className="footer-main">
+            <div className="footer-brand">
+              <div className="brand-footer">
+                <Sparkles size={18} />
+                <span>MetaBuyX</span>
+              </div>
+              <p>Tu asistente inteligente para convertir sueños en planes alcanzables</p>
+            </div>
+            <div className="footer-links">
+              <div className="footer-column">
+                <h4>Producto</h4>
+                <ul>
+                  <li><a href="#">Características</a></li>
+                  <li><a href="#">Precios</a></li>
+                  <li><a href="#">Seguridad</a></li>
+                </ul>
+              </div>
+              <div className="footer-column">
+                <h4>Recursos</h4>
+                <ul>
+                  <li><a href="#">Documentación</a></li>
+                  <li><a href="#">Guías</a></li>
+                  <li><a href="#">Blog</a></li>
+                </ul>
+              </div>
+              <div className="footer-column">
+                <h4>Soporte</h4>
+                <ul>
+                  <li><a href="#">Centro de ayuda</a></li>
+                  <li><a href="#">Contacto</a></li>
+                  <li><a href="#">Estado del servicio</a></li>
+                </ul>
+              </div>
             </div>
           </div>
-          
-          <div className="footer-links-glass">
-            <div className="footer-column-glass">
-              <h4>Producto</h4>
-              <ul>
-                <li><a href="#" className="footer-link-glass">Características</a></li>
-                <li><a href="#" className="footer-link-glass">Planes</a></li>
-                <li><a href="#" className="footer-link-glass">Seguridad</a></li>
-              </ul>
-            </div>
-            <div className="footer-column-glass">
-              <h4>Soporte</h4>
-              <ul>
-                <li><a href="#" className="footer-link-glass">Ayuda</a></li>
-                <li><a href="#" className="footer-link-glass">Contacto</a></li>
-                <li><a href="#" className="footer-link-glass">FAQ</a></li>
-              </ul>
-            </div>
-            <div className="footer-column-glass">
-              <h4>Legal</h4>
-              <ul>
-                <li><a href="#" className="footer-link-glass">Privacidad</a></li>
-                <li><a href="#" className="footer-link-glass">Términos</a></li>
-                <li><a href="#" className="footer-link-glass">Cookies</a></li>
-              </ul>
-            </div>
+          <div className="footer-bottom">
+            <p>© {new Date().getFullYear()} MetaBuyX. Todos los derechos reservados.</p>
           </div>
         </div>
-        
-        <div className="footer-bottom-glass">
-          <p>&copy; {new Date().getFullYear()} MetaBuyX. Todos los derechos reservados.</p>
-          <p className="footer-tagline-glass">Hecho con 💙 para que alcances tus metas</p>
-        </div>
-        
-        <div className="footer-glass-overlay"></div>
       </footer>
     </div>
   );
