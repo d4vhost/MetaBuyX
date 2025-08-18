@@ -1,0 +1,342 @@
+/* src/pages/Workspace/workspace.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* --- Reutilizando las variables de tu diseño original para consistencia --- */
+:root {
+  --color-background: #f8fafc; /* Ligeramente más gris para el fondo del workspace */
+  --color-surface: #ffffff;
+  --color-surface-secondary: #f1f5f9;
+  --color-surface-hover: #f1f5f9;
+  
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #64748b;
+  
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2563eb;
+  --color-accent-light: #dbeafe;
+  
+  --color-border: #e2e8f0;
+  --color-border-hover: #cbd5e1;
+  
+  --color-success: #10b981;
+  --color-progress: #6366f1;
+  --color-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.07);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+/* --- LAYOUT PRINCIPAL --- */
+.workspace-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.workspace-sidebar {
+  width: 260px;
+  background-color: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-lg);
+  position: fixed;
+  height: 100%;
+  left: 0;
+  top: 0;
+}
+
+.workspace-main {
+  flex: 1;
+  margin-left: 260px; /* Ancho de la barra lateral */
+  padding: var(--space-xl);
+}
+
+/* --- BARRA LATERAL (Sidebar) --- */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0 var(--space-sm) var(--space-xl);
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+.sidebar-header .brand-icon { color: var(--color-accent); }
+.sidebar-header .brand-text { letter-spacing: -0.025em; }
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 0.75rem var(--space-md);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+.nav-link:hover {
+  background-color: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+.nav-link.active {
+  background-color: var(--color-accent-light);
+  color: var(--color-accent);
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--color-border);
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+}
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+.user-name { font-weight: 600; font-size: 0.9rem; }
+.user-email { font-size: 0.8rem; color: var(--color-text-tertiary); }
+.nav-link.logout:hover {
+    background-color: #fee2e2;
+    color: #ef4444;
+}
+
+/* --- CABECERA (Header) --- */
+.workspace-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xl);
+}
+.header-title { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; }
+.header-subtitle { color: var(--color-text-secondary); margin-top: 0.25rem; }
+
+.header-actions { display: flex; align-items: center; gap: var(--space-md); }
+.search-bar {
+  position: relative;
+}
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-tertiary);
+}
+.search-bar input {
+  padding: 0.65rem 0.75rem 0.65rem 2.25rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  min-width: 250px;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-light);
+}
+
+/* Botón principal reutilizado de home.css */
+.btn-cta {
+  background: var(--color-gradient);
+  color: white;
+  border: none;
+  padding: 0.75rem var(--space-lg);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  box-shadow: var(--shadow-sm);
+}
+.btn-cta:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+/* --- TARJETAS DE RESUMEN --- */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+.summary-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.summary-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-sm);
+}
+.summary-title { color: var(--color-text-secondary); font-weight: 500; font-size: 0.9rem; }
+.summary-value { font-size: 1.5rem; font-weight: 600; }
+
+/* --- GRID DE CONTENIDO (Metas y Lista) --- */
+.workspace-content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--space-xl);
+    align-items: flex-start;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg);
+    padding: 0 0.25rem;
+}
+.section-header h2 { font-size: 1.2rem; font-weight: 600; }
+.section-header a { font-size: 0.85rem; color: var(--color-accent); text-decoration: none; font-weight: 500; }
+.section-header a:hover { text-decoration: underline; }
+
+/* --- TARJETA DE METAS --- */
+.goals-list { display: flex; flex-direction: column; gap: var(--space-lg); }
+
+.goal-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    transition: all 0.2s ease;
+}
+.goal-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-border-hover);
+}
+
+.goal-card-header { display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md); }
+.goal-card-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    background-color: var(--color-surface-secondary);
+    color: var(--color-text-primary);
+}
+.goal-card-title { font-weight: 600; }
+
+.goal-card-progress { margin-bottom: var(--space-lg); }
+.progress-text { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--color-text-secondary); }
+.progress-text span { color: var(--color-text-primary); font-weight: 500; }
+.progress-bar-container { width: 100%; height: 8px; background-color: var(--color-surface-secondary); border-radius: 99px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--color-gradient); border-radius: 99px; }
+
+.btn-add-saving {
+    width: 100%;
+    padding: 0.65rem;
+    font-family: inherit;
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-add-saving:hover { background-color: var(--color-surface-hover); border-color: var(--color-border-hover); }
+
+/* Estilos para Metas en Equipo */
+.goal-card.team .team-avatars { margin-left: auto; display: flex; }
+.team-avatars img {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--color-surface);
+    margin-left: -8px;
+}
+
+/* --- LISTA RÁPIDA / CHECKLIST --- */
+.quick-list-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-sm) var(--space-lg);
+}
+
+/* Estilos de checklist reutilizados y adaptados de home.css */
+.checklist-item { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-md) 0; border-bottom: 1px solid var(--color-border); }
+.checklist-item:last-child { border-bottom: none; }
+.checkbox { width: 20px; height: 20px; border: 2px solid var(--color-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; flex-shrink: 0; cursor: pointer;}
+.checkbox.checked { background: var(--color-gradient); border-color: transparent; }
+.check-mark::before { content: '✓'; color: white; font-size: 12px; font-weight: 600; }
+.item-text { flex: 1; font-weight: 500; color: var(--color-text-primary); font-size: 0.95rem; }
+.item-price { font-size: 0.875rem; font-weight: 600; color: var(--color-text-tertiary); }
+.checklist-item.completed .item-text { text-decoration: line-through; color: var(--color-text-tertiary); }
+
+/* --- RESPONSIVE DESIGN --- */
+@media (max-width: 1200px) {
+    .workspace-content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .workspace-sidebar {
+        /* En una app real, esto se ocultaría y se mostraría con un botón hamburguesa */
+        transform: translateX(-100%);
+        position: absolute;
+    }
+    .workspace-main {
+        margin-left: 0;
+        padding: var(--space-lg);
+    }
+    .workspace-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-md);
+    }
+    .header-actions {
+        width: 100%;
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+    .search-bar input {
+        min-width: 100%;
+    }
+}
