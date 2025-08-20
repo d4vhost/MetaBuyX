@@ -1,48 +1,40 @@
 // src/pages/Home.tsx
 
-import { motion, type Variants } from "framer-motion";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { ArrowRight, Wallet, Search, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import metaBuyLogo from "../../assets/images/metabuylogo.png";
 import "./home.css";
 
-// Iconos minimalistas
-const WalletIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a2 2 0 0 1 0 4H5a2 2 0 0 1 0 4h13a1 1 0 0 0 1-1v-3"></path>
-    <path d="M16 12h2"></path>
-  </svg>
-);
+// === Datos para componentes (Data-driven UI) ===
+const featuresData = [
+  { icon: <Wallet size={20} />, text: "Simulación Inteligente" },
+  { icon: <Search size={20} />, text: "Búsqueda Avanzada" },
+  { icon: <Users size={20} />, text: "Objetivos Compartidos" },
+];
 
-const SearchIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8"></circle>
-    <path d="m21 21-4.35-4.35"></path>
-  </svg>
-);
-
-const CollaborateIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-    <circle cx="8.5" cy="7" r="4"></circle>
-    <path d="M20 8v6M23 11h-6"></path>
-  </svg>
-);
-
-// Datos para las demos
-const checklistItems = [
+const checklistItemsData = [
   { text: "MacBook Pro 16\"", price: "$2,499", completed: true },
   { text: "AirPods Pro", price: "$249", completed: true },
   { text: "Monitor 4K", price: "$599", completed: false },
-  { text: "Escritorio Standing", price: "$899", completed: false }
+  { text: "Escritorio Standing", price: "$899", completed: false },
 ];
 
-const goalItems = [
+const goalItemsData = [
   { title: "Viaje a Tokio", amount: "$3,200", progress: 78 },
   { title: "Curso de Programación", amount: "$449", progress: 45 },
-  { title: "Cámara Profesional", amount: "$1,899", progress: 23 }
+  { title: "Cámara Profesional", amount: "$1,899", progress: 23 },
 ];
 
+const footerLinksData = [
+  { title: "Producto", links: ["Características", "Precios", "Seguridad"] },
+  { title: "Recursos", links: ["Documentación", "Guías", "Blog"] },
+  { title: "Soporte", links: ["Centro de ayuda", "Contacto", "Estado del servicio"] },
+];
+
+
+// === Componentes Reutilizables ===
 const ChecklistItem = ({ text, price, completed, delay }: { text: string; price: string; completed?: boolean; delay: number }) => (
   <motion.div
     className={`checklist-item ${completed ? 'completed' : ''}`}
@@ -64,14 +56,14 @@ const GoalItem = ({ title, amount, progress, delay }: { title: string; amount: s
     initial={{ opacity: 0, y: 12 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-    whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+    whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
   >
     <div className="goal-header">
       <span className="goal-title">{title}</span>
       <span className="goal-amount">{amount}</span>
     </div>
     <div className="goal-progress">
-      <motion.div 
+      <motion.div
         className="goal-progress-fill"
         initial={{ width: "0%" }}
         animate={{ width: `${progress}%` }}
@@ -82,18 +74,14 @@ const GoalItem = ({ title, amount, progress, delay }: { title: string; amount: s
   </motion.div>
 );
 
-const AnimatedDemoCards = () => {
-  const [currentCard, setCurrentCard] = useState(0);
-
-  const demoCards = [
+const demoCards = [
     {
       title: "Mi Lista de Trabajo",
-      type: "checklist",
       content: (
         <div className="demo-content">
-          {checklistItems.map((item: { text: string; price: string; completed: boolean }, index: number) => (
+          {checklistItemsData.map((item, index) => (
             <ChecklistItem
-              key={item.text}
+              key={`checklist-${item.text}-${index}`}
               {...item}
               delay={0.1 + (index * 0.1)}
             />
@@ -103,36 +91,56 @@ const AnimatedDemoCards = () => {
     },
     {
       title: "Progreso Visual",
-      type: "progress",
       content: (
-        <div className="progress-demo">
-          <div className="progress-header">
-            <span>iPhone 16 Pro</span>
-            <span>$1,199</span>
+        <div className="demo-content progress-demo">
+          <div className="progress-item">
+            <div className="progress-header">
+              <span>iPhone 16 Pro</span>
+              <span>$1,199</span>
+            </div>
+            <div className="progress-container">
+              <motion.div
+                className="progress-fill"
+                key="progress-fill-iphone"
+                initial={{ width: "0%" }}
+                animate={{ width: "72%" }}
+                transition={{ duration: 2, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.5 }}
+              />
+            </div>
+            <div className="progress-details">
+              <span>$863 ahorrados</span>
+              <span>72%</span>
+            </div>
           </div>
-          <div className="progress-container">
-            <motion.div
-              className="progress-fill"
-              initial={{ width: "0%" }}
-              animate={{ width: "72%" }}
-              transition={{ duration: 2, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.5 }}
-            />
-          </div>
-          <div className="progress-details">
-            <span>$863 ahorrados</span>
-            <span>72%</span>
+          <div className="progress-item">
+            <div className="progress-header">
+              <span>PlayStation 5</span>
+              <span>$499</span>
+            </div>
+            <div className="progress-container">
+              <motion.div
+                className="progress-fill"
+                key="progress-fill-ps5"
+                initial={{ width: "0%" }}
+                animate={{ width: "34%" }}
+                transition={{ duration: 2, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.8 }}
+              />
+            </div>
+            <div className="progress-details">
+              <span>$170 ahorrados</span>
+              <span>34%</span>
+            </div>
           </div>
         </div>
       )
     },
     {
       title: "Mis Objetivos",
-      type: "goals",
       content: (
-        <div className="goals-list">
-          {goalItems.map((goal: { title: string; amount: string; progress: number }, index: number) => (
+        <div className="demo-content goals-list">
+          {goalItemsData.map((goal, index) => (
             <GoalItem
-              key={goal.title}
+              key={`goal-${goal.title}-${index}`}
               {...goal}
               delay={0.1 + (index * 0.1)}
             />
@@ -142,35 +150,51 @@ const AnimatedDemoCards = () => {
     }
   ];
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentCard((prev) => (prev + 1) % demoCards.length);
-    }, 4000);
+// === Componente del Carrusel de Demos (Lógica simplificada) ===
+const AnimatedDemoCards = () => {
+  const [currentCard, setCurrentCard] = useState(0);
 
-    return () => clearInterval(interval);
-  }, [demoCards.length]);
+  // Lógica de intervalo simplificada con useEffect
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentCard((prev) => (prev + 1) % demoCards.length);
+    }, 4500);
+
+    return () => clearInterval(timer);
+  }, [currentCard]);
+
+  const handleIndicatorClick = (index: number) => {
+    if (index !== currentCard) {
+      setCurrentCard(index);
+    }
+  };
 
   return (
     <div className="demo-card-wrapper">
-      <motion.div 
-        className="demo-card"
-        key={currentCard}
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-      >
-        <h4 className="demo-title">{demoCards[currentCard].title}</h4>
-        {demoCards[currentCard].content}
-      </motion.div>
-      
+      <div className="demo-card-container">
+        <AnimatePresence mode="wait">
+          <motion.div
+            className="demo-card"
+            key={`card-${currentCard}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <h4 className="demo-title">{demoCards[currentCard].title}</h4>
+            {demoCards[currentCard].content}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
       <div className="demo-indicators">
         {demoCards.map((_, index) => (
           <motion.button
-            key={index}
+            key={`indicator-${index}`}
             className={`demo-indicator ${index === currentCard ? 'active' : ''}`}
-            onClick={() => setCurrentCard(index)}
-            whileHover={{ scale: 1.2 }}
-            whileTap={{ scale: 0.9 }}
+            onClick={() => handleIndicatorClick(index)}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
           />
         ))}
       </div>
@@ -178,64 +202,52 @@ const AnimatedDemoCards = () => {
   );
 };
 
+// === Componente Principal de la Página ===
 function Home() {
   const navigate = useNavigate();
-
-  const handleGetStarted = () => {
-    navigate('/login');
-  };
+  const handleGetStarted = () => navigate('/login');
 
   const animations: { [key: string]: Variants } = {
     container: {
       hidden: {},
-      visible: { transition: { staggerChildren: 0.1, delayChildren: 0.3 } }
+      visible: { transition: { staggerChildren: 0.08, delayChildren: 0.2 } }
     },
     fadeInUp: {
-      hidden: { opacity: 0, y: 40 },
+      hidden: { opacity: 0, y: 24 },
       visible: {
         opacity: 1, y: 0,
-        transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }
+        transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }
       }
     },
     scaleIn: {
-      hidden: { scale: 0.95, opacity: 0 },
+      hidden: { scale: 0.98, opacity: 0 },
       visible: {
         scale: 1, opacity: 1,
-        transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }
+        transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }
       }
     }
   };
 
   return (
     <div className="home-wrapper">
-      {/* Navigation */}
-      <nav className="navbar">
-        <div className="nav-content">
-          <div className="nav-brand">
-            <Sparkles className="brand-icon" size={20} />
-            <span className="brand-text">MetaBuyX</span>
-          </div>
-          <motion.button
-            className="btn-primary"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleGetStarted}
-          >
-            Comenzar
-          </motion.button>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <motion.div
+      <motion.main
         variants={animations.container}
         initial="hidden"
         animate="visible"
         className="main-container"
       >
-        {/* Hero Section with Side Layout */}
         <section className="hero-section-split">
           <div className="hero-content-left">
+            <motion.div
+              className="hero-logo"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+            >
+              <img src={metaBuyLogo} alt="MetaBuyX Logo" className="brand-logo-image" />
+              <span>MetaBuyX</span>
+            </motion.div>
+
             <motion.div variants={animations.fadeInUp}>
               <h1 className="hero-title">
                 ¿Imposible?<br />
@@ -245,77 +257,56 @@ function Home() {
                 Tu asistente inteligente para convertir sueños en planes alcanzables
               </p>
               <div className="hero-features">
-                <div className="hero-feature">
-                  <WalletIcon />
-                  <span>Simulación Inteligente</span>
-                </div>
-                <div className="hero-feature">
-                  <SearchIcon />
-                  <span>Búsqueda Avanzada</span>
-                </div>
-                <div className="hero-feature">
-                  <CollaborateIcon />
-                  <span>Objetivos Compartidos</span>
-                </div>
+                {featuresData.map((feature, index) => (
+                  <div key={index} className="hero-feature">
+                    {feature.icon}
+                    <span>{feature.text}</span>
+                  </div>
+                ))}
               </div>
               <motion.button
                 variants={animations.scaleIn}
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                className="btn-cta"
+                whileHover={{ scale: 1.01, y: -1 }}
+                whileTap={{ scale: 0.99 }}
+                className="btn btn-cta"
                 onClick={handleGetStarted}
               >
-                <span>Crear mi primer plan</span>
-                <ArrowRight size={16} />
+                <span>Comenzar</span>
+                <ArrowRight size={14} />
               </motion.button>
             </motion.div>
           </div>
-          
-          <motion.div 
+
+          <motion.div
             className="hero-demo-right"
             variants={animations.scaleIn}
           >
             <AnimatedDemoCards />
           </motion.div>
         </section>
-      </motion.div>
+      </motion.main>
 
-      {/* Footer */}
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-main">
             <div className="footer-brand">
               <div className="brand-footer">
-                <Sparkles size={18} />
+                <img src={metaBuyLogo} alt="MetaBuyX Logo" className="brand-logo-image" />
                 <span>MetaBuyX</span>
               </div>
-              <p>Tu asistente inteligente para convertir sueños en planes alcanzables</p>
+              <p>Tu asistente inteligente para convertir sueños en planes alcanzables.</p>
             </div>
             <div className="footer-links">
-              <div className="footer-column">
-                <h4>Producto</h4>
-                <ul>
-                  <li><a href="#">Características</a></li>
-                  <li><a href="#">Precios</a></li>
-                  <li><a href="#">Seguridad</a></li>
-                </ul>
-              </div>
-              <div className="footer-column">
-                <h4>Recursos</h4>
-                <ul>
-                  <li><a href="#">Documentación</a></li>
-                  <li><a href="#">Guías</a></li>
-                  <li><a href="#">Blog</a></li>
-                </ul>
-              </div>
-              <div className="footer-column">
-                <h4>Soporte</h4>
-                <ul>
-                  <li><a href="#">Centro de ayuda</a></li>
-                  <li><a href="#">Contacto</a></li>
-                  <li><a href="#">Estado del servicio</a></li>
-                </ul>
-              </div>
+              {footerLinksData.map((column) => (
+                <div key={column.title} className="footer-column">
+                  <h4>{column.title}</h4>
+                  <ul>
+                    {column.links.map((link) => (
+                      <li key={link}><a href="#">{link}</a></li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
           <div className="footer-bottom">
