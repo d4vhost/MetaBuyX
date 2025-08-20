@@ -1,7 +1,7 @@
 // src/pages/Login/login.tsx
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Eye, EyeOff, Mail, Lock, Sparkles } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Mail, Lock, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
   signInWithEmailAndPassword, 
@@ -12,6 +12,7 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { auth } from '../../firebase/firebaseConfig';
+import metaBuyLogo from '../../assets/images/metabuylogo.png';
 import './login.css';
 
 const Login = () => {
@@ -152,19 +153,6 @@ const Login = () => {
   return (
     <div className="login-wrapper">
       <div className="login-container">
-        {/* Header */}
-        <motion.div 
-          className="login-header"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="login-brand" onClick={handleBackToHome}>
-            <Sparkles className="brand-icon" size={20} />
-            <span className="brand-text">MetaBuyX</span>
-          </div>
-        </motion.div>
-
         {/* Main Content */}
         <div className="login-content">
           {/* Left Side - Form */}
@@ -175,8 +163,20 @@ const Login = () => {
             transition={{ duration: 0.7, delay: 0.2 }}
           >
             <div className="form-container">
+              {/* Back to Home Button */}
+              <motion.button
+                className="back-to-home"
+                onClick={handleBackToHome}
+                whileHover={{ x: -2 }}
+                whileTap={{ scale: 0.98 }}
+                disabled={loading}
+              >
+                <ArrowLeft size={16} />
+                Volver al inicio
+              </motion.button>
+
               <h1 className="form-title">
-                {isLogin ? 'Bienvenido de vuelta' : 'Crear cuenta'}
+                {isLogin ? 'Bienvenido de vuelta' : 'Crear cuenta en MetaBuyX'}
               </h1>
               <p className="form-subtitle">
                 {isLogin 
@@ -351,6 +351,19 @@ const Login = () => {
             transition={{ duration: 0.7, delay: 0.4 }}
           >
             <div className="visual-content">
+              {/* Logo en movimiento circular */}
+              <motion.div
+                className="logo-container"
+                animate={{ rotate: 360 }}
+                transition={{
+                  duration: 20,
+                  repeat: Infinity,
+                  ease: "linear"
+                }}
+              >
+                <img src={metaBuyLogo} alt="MetaBuyX Logo" className="rotating-logo" />
+              </motion.div>
+
               <h2>Tu futuro comienza aquí</h2>
               <p>Únete a miles de personas que ya están convirtiendo sus sueños en realidad con MetaBuyX</p>
               
@@ -372,6 +385,13 @@ const Login = () => {
           </motion.div>
         </div>
       </div>
+
+      {/* Footer Simplificado */}
+      <footer className="login-footer">
+        <div className="footer-content">
+          <p>© 2025 MetaBuyX. Todos los derechos reservados.</p>
+        </div>
+      </footer>
     </div>
   );
 };
