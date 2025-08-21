@@ -1,4 +1,4 @@
-// src/pages/Home.tsx
+// src/pages/Home/Home.tsx - COMPLETAMENTE AISLADO
 
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { ArrowRight, Wallet, Search, Users } from "lucide-react";
@@ -32,7 +32,6 @@ const footerLinksData = [
   { title: "Recursos", links: ["Documentación", "Guías", "Blog"] },
   { title: "Soporte", links: ["Centro de ayuda", "Contacto", "Estado del servicio"] },
 ];
-
 
 // === Componentes Reutilizables ===
 const ChecklistItem = ({ text, price, completed, delay }: { text: string; price: string; completed?: boolean; delay: number }) => (
@@ -75,80 +74,80 @@ const GoalItem = ({ title, amount, progress, delay }: { title: string; amount: s
 );
 
 const demoCards = [
-    {
-      title: "Mi Lista de Trabajo",
-      content: (
-        <div className="demo-content">
-          {checklistItemsData.map((item, index) => (
-            <ChecklistItem
-              key={`checklist-${item.text}-${index}`}
-              {...item}
-              delay={0.1 + (index * 0.1)}
-            />
-          ))}
-        </div>
-      )
-    },
-    {
-      title: "Progreso Visual",
-      content: (
-        <div className="demo-content progress-demo">
-          <div className="progress-item">
-            <div className="progress-header">
-              <span>iPhone 16 Pro</span>
-              <span>$1,199</span>
-            </div>
-            <div className="progress-container">
-              <motion.div
-                className="progress-fill"
-                key="progress-fill-iphone"
-                initial={{ width: "0%" }}
-                animate={{ width: "72%" }}
-                transition={{ duration: 2, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.5 }}
-              />
-            </div>
-            <div className="progress-details">
-              <span>$863 ahorrados</span>
-              <span>72%</span>
-            </div>
+  {
+    title: "Mi Lista de Trabajo",
+    content: (
+      <div className="demo-content">
+        {checklistItemsData.map((item, index) => (
+          <ChecklistItem
+            key={`checklist-${item.text}-${index}`}
+            {...item}
+            delay={0.1 + (index * 0.1)}
+          />
+        ))}
+      </div>
+    )
+  },
+  {
+    title: "Progreso Visual",
+    content: (
+      <div className="demo-content progress-demo">
+        <div className="progress-item">
+          <div className="progress-header">
+            <span>iPhone 16 Pro</span>
+            <span>$1,199</span>
           </div>
-          <div className="progress-item">
-            <div className="progress-header">
-              <span>PlayStation 5</span>
-              <span>$499</span>
-            </div>
-            <div className="progress-container">
-              <motion.div
-                className="progress-fill"
-                key="progress-fill-ps5"
-                initial={{ width: "0%" }}
-                animate={{ width: "34%" }}
-                transition={{ duration: 2, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.8 }}
-              />
-            </div>
-            <div className="progress-details">
-              <span>$170 ahorrados</span>
-              <span>34%</span>
-            </div>
+          <div className="progress-container">
+            <motion.div
+              className="progress-fill"
+              key="progress-fill-iphone"
+              initial={{ width: "0%" }}
+              animate={{ width: "72%" }}
+              transition={{ duration: 2, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.5 }}
+            />
+          </div>
+          <div className="progress-details">
+            <span>$863 ahorrados</span>
+            <span>72%</span>
           </div>
         </div>
-      )
-    },
-    {
-      title: "Mis Objetivos",
-      content: (
-        <div className="demo-content goals-list">
-          {goalItemsData.map((goal, index) => (
-            <GoalItem
-              key={`goal-${goal.title}-${index}`}
-              {...goal}
-              delay={0.1 + (index * 0.1)}
+        <div className="progress-item">
+          <div className="progress-header">
+            <span>PlayStation 5</span>
+            <span>$499</span>
+          </div>
+          <div className="progress-container">
+            <motion.div
+              className="progress-fill"
+              key="progress-fill-ps5"
+              initial={{ width: "0%" }}
+              animate={{ width: "34%" }}
+              transition={{ duration: 2, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.8 }}
             />
-          ))}
+          </div>
+          <div className="progress-details">
+            <span>$170 ahorrados</span>
+            <span>34%</span>
+          </div>
         </div>
-      )
-    }
-  ];
+      </div>
+    )
+  },
+  {
+    title: "Mis Objetivos",
+    content: (
+      <div className="demo-content goals-list">
+        {goalItemsData.map((goal, index) => (
+          <GoalItem
+            key={`goal-${goal.title}-${index}`}
+            {...goal}
+            delay={0.1 + (index * 0.1)}
+          />
+        ))}
+      </div>
+    )
+  }
+];
 
 // === Componente del Carrusel de Demos (Lógica simplificada) ===
 const AnimatedDemoCards = () => {
