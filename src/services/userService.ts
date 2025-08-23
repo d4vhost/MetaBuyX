@@ -6,11 +6,8 @@ import {
   setDoc, 
   addDoc,
   getDocs,
-  query,
-  where,
   updateDoc,
   deleteDoc,
-  arrayUnion,
   increment,
   serverTimestamp
 } from 'firebase/firestore';
@@ -22,7 +19,8 @@ import type {
   TeamGoal, 
   QuickListItem, 
   CreateIndividualGoal, 
-  CreateTeamGoal 
+  CreateTeamGoal,
+  CreateQuickListItem
 } from '../types';
 
 // Servicios para el perfil de usuario
@@ -65,21 +63,21 @@ export const userService = {
   }
 };
 
-// Servicios para metas individuales
+// Servicios para metas individuales (como subcolección)
 export const goalService = {
   // Crear nueva meta individual
   async createIndividualGoal(userId: string, goalData: CreateIndividualGoal): Promise<string> {
-    const goalsRef = collection(db, 'individualGoals');
+    // Crear subcolección 'goals' dentro del documento del usuario
+    const goalsRef = collection(db, 'users', userId, 'goals');
     const docRef = await addDoc(goalsRef, {
       ...goalData,
-      userId,
       savedAmount: 0,
       isCompleted: false,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
     
-    // Actualizar contador de metas activas
+    // Actualizar contador de metas activas en el documento del usuario
     const userRef = doc(db, 'users', userId);
     await updateDoc(userRef, {
       activeGoals: increment(1)
@@ -90,23 +88,23 @@ export const goalService = {
 
   // Obtener metas individuales del usuario
   async getUserIndividualGoals(userId: string): Promise<IndividualGoal[]> {
-    const goalsRef = collection(db, 'individualGoals');
-    const q = query(goalsRef, where('userId', '==', userId));
-    const querySnapshot = await getDocs(q);
+    const goalsRef = collection(db, 'users', userId, 'goals');
+    const querySnapshot = await getDocs(goalsRef);
     
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
+      userId,
       ...doc.data()
     })) as IndividualGoal[];
   },
 
   // Agregar ahorro a una meta individual
-  async addSavingToGoal(goalId: string, amount: number): Promise<void> {
-    const goalRef = doc(db, 'individualGoals', goalId);
+  async addSavingToGoal(userId: string, goalId: string, amount: number): Promise<void> {
+    const goalRef = doc(db, 'users', userId, 'goals', goalId);
     const goalSnap = await getDoc(goalRef);
     
     if (goalSnap.exists()) {
-      const goalData = goalSnap.data() as IndividualGoal;
+      const goalData = goalSnap.data() as Omit<IndividualGoal, 'id' | 'userId'>;
       const newSavedAmount = goalData.savedAmount + amount;
       const isCompleted = newSavedAmount >= goalData.targetAmount;
       
@@ -117,7 +115,7 @@ export const goalService = {
       });
       
       // Actualizar total de ahorros del usuario
-      const userRef = doc(db, 'users', goalData.userId);
+      const userRef = doc(db, 'users', userId);
       await updateDoc(userRef, {
         totalSavings: increment(amount)
       });
@@ -129,10 +127,29 @@ export const goalService = {
         });
       }
     }
+  },
+
+  // Eliminar una meta
+  async deleteGoal(userId: string, goalId: string): Promise<void> {
+    const goalRef = doc(db, 'users', userId, 'goals', goalId);
+    const goalSnap = await getDoc(goalRef);
+    
+    if (goalSnap.exists()) {
+      const goalData = goalSnap.data();
+      await deleteDoc(goalRef);
+      
+      // Si no estaba completada, decrementar metas activas
+      if (!goalData.isCompleted) {
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, {
+          activeGoals: increment(-1)
+        });
+      }
+    }
   }
 };
 
-// Servicios para metas en equipo
+// Servicios para metas en equipo (mantener como colección raíz ya que involucran múltiples usuarios)
 export const teamGoalService = {
   // Crear nueva meta en equipo
   async createTeamGoal(creatorId: string, goalData: CreateTeamGoal): Promise<string> {
@@ -154,30 +171,16 @@ export const teamGoalService = {
   // Obtener metas en equipo del usuario
   async getUserTeamGoals(userId: string): Promise<TeamGoal[]> {
     const teamGoalsRef = collection(db, 'teamGoals');
-    const q = query(teamGoalsRef, where('members', 'array-contains', userId));
-    const querySnapshot = await getDocs(q);
+    // Necesitamos consultar todas las metas de equipo y filtrar en cliente
+    // o crear un índice compuesto para esta consulta
+    const querySnapshot = await getDocs(teamGoalsRef);
     
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as TeamGoal[];
-  },
-
-  // Unirse a una meta en equipo
-  async joinTeamGoal(goalId: string, userId: string): Promise<void> {
-    const goalRef = doc(db, 'teamGoals', goalId);
-    await updateDoc(goalRef, {
-      members: arrayUnion(userId),
-      updatedAt: serverTimestamp(),
-    });
-    
-    // Actualizar las contribuciones del nuevo miembro
-    const goalSnap = await getDoc(goalRef);
-    if (goalSnap.exists()) {
-      await updateDoc(goalRef, {
-        [`memberContributions.${userId}`]: 0,
-      });
-    }
+    return querySnapshot.docs
+      .map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }) as TeamGoal)
+      .filter(goal => goal.members.includes(userId));
   },
 
   // Aportar a una meta en equipo
@@ -207,15 +210,14 @@ export const teamGoalService = {
   }
 };
 
-// Servicios para lista rápida
+// Servicios para lista rápida (como subcolección 'items')
 export const quickListService = {
   // Crear item en lista rápida
-  async createQuickListItem(userId: string, text: string, price: number): Promise<string> {
-    const quickListRef = collection(db, 'quickListItems');
-    const docRef = await addDoc(quickListRef, {
-      userId,
-      text,
-      price,
+  async createQuickListItem(userId: string, itemData: CreateQuickListItem): Promise<string> {
+    // Crear subcolección 'items' dentro del documento del usuario
+    const itemsRef = collection(db, 'users', userId, 'items');
+    const docRef = await addDoc(itemsRef, {
+      ...itemData,
       completed: false,
       createdAt: serverTimestamp(),
     });
@@ -225,19 +227,19 @@ export const quickListService = {
 
   // Obtener items de lista rápida del usuario
   async getUserQuickListItems(userId: string): Promise<QuickListItem[]> {
-    const quickListRef = collection(db, 'quickListItems');
-    const q = query(quickListRef, where('userId', '==', userId));
-    const querySnapshot = await getDocs(q);
+    const itemsRef = collection(db, 'users', userId, 'items');
+    const querySnapshot = await getDocs(itemsRef);
     
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
+      userId,
       ...doc.data()
     })) as QuickListItem[];
   },
 
   // Marcar item como completado/no completado
-  async toggleQuickListItem(itemId: string): Promise<void> {
-    const itemRef = doc(db, 'quickListItems', itemId);
+  async toggleQuickListItem(userId: string, itemId: string): Promise<void> {
+    const itemRef = doc(db, 'users', userId, 'items', itemId);
     const itemSnap = await getDoc(itemRef);
     
     if (itemSnap.exists()) {
@@ -249,8 +251,8 @@ export const quickListService = {
   },
 
   // Eliminar item de lista rápida
-  async deleteQuickListItem(itemId: string): Promise<void> {
-    const itemRef = doc(db, 'quickListItems', itemId);
+  async deleteQuickListItem(userId: string, itemId: string): Promise<void> {
+    const itemRef = doc(db, 'users', userId, 'items', itemId);
     await deleteDoc(itemRef);
   }
 };

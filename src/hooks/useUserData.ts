@@ -56,12 +56,12 @@ export const useUserData = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentUser]); // currentUser es la única dependencia real
+  }, [currentUser]);
 
   // Recargar datos cuando cambie el usuario
   useEffect(() => {
     loadUserData();
-  }, [loadUserData]); // Ahora incluimos loadUserData que es estable gracias a useCallback
+  }, [loadUserData]);
 
   // Funciones para manejar metas individuales
   const addIndividualGoal = useCallback(async (goalData: CreateIndividualGoal): Promise<void> => {
@@ -69,7 +69,6 @@ export const useUserData = () => {
     
     try {
       await goalService.createIndividualGoal(currentUser.uid, goalData);
-      // Recargar datos
       await loadUserData();
     } catch (error) {
       console.error('Error creating individual goal:', error);
@@ -77,14 +76,26 @@ export const useUserData = () => {
   }, [currentUser, loadUserData]);
 
   const addSavingToGoal = useCallback(async (goalId: string, amount: number): Promise<void> => {
+    if (!currentUser) return;
+    
     try {
-      await goalService.addSavingToGoal(goalId, amount);
-      // Recargar datos
+      await goalService.addSavingToGoal(currentUser.uid, goalId, amount);
       await loadUserData();
     } catch (error) {
       console.error('Error adding saving to goal:', error);
     }
-  }, [loadUserData]);
+  }, [currentUser, loadUserData]);
+
+  const deleteGoal = useCallback(async (goalId: string): Promise<void> => {
+    if (!currentUser) return;
+    
+    try {
+      await goalService.deleteGoal(currentUser.uid, goalId);
+      await loadUserData();
+    } catch (error) {
+      console.error('Error deleting goal:', error);
+    }
+  }, [currentUser, loadUserData]);
 
   // Funciones para metas en equipo
   const createTeamGoal = useCallback(async (goalData: CreateTeamGoal): Promise<void> => {
@@ -114,7 +125,7 @@ export const useUserData = () => {
     if (!currentUser) return;
     
     try {
-      await quickListService.createQuickListItem(currentUser.uid, text, price);
+      await quickListService.createQuickListItem(currentUser.uid, { text, price });
       await loadUserData();
     } catch (error) {
       console.error('Error creating quick list item:', error);
@@ -122,22 +133,26 @@ export const useUserData = () => {
   }, [currentUser, loadUserData]);
 
   const toggleQuickListItem = useCallback(async (itemId: string): Promise<void> => {
+    if (!currentUser) return;
+    
     try {
-      await quickListService.toggleQuickListItem(itemId);
+      await quickListService.toggleQuickListItem(currentUser.uid, itemId);
       await loadUserData();
     } catch (error) {
       console.error('Error toggling quick list item:', error);
     }
-  }, [loadUserData]);
+  }, [currentUser, loadUserData]);
 
   const deleteQuickListItem = useCallback(async (itemId: string): Promise<void> => {
+    if (!currentUser) return;
+    
     try {
-      await quickListService.deleteQuickListItem(itemId);
+      await quickListService.deleteQuickListItem(currentUser.uid, itemId);
       await loadUserData();
     } catch (error) {
       console.error('Error deleting quick list item:', error);
     }
-  }, [loadUserData]);
+  }, [currentUser, loadUserData]);
 
   // Calcular estadísticas
   const statistics: UserStatistics = {
@@ -159,6 +174,7 @@ export const useUserData = () => {
     loadUserData,
     addIndividualGoal,
     addSavingToGoal,
+    deleteGoal,
     createTeamGoal,
     contributeToTeamGoal,
     addQuickListItem,

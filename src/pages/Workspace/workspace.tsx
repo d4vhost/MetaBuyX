@@ -3,34 +3,17 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import {
   LayoutDashboard, Users, CheckSquare, Settings, LogOut, PlusCircle, Search,
-  DollarSign, TrendingUp, Star, Plane, Gift, Loader, Menu, X, Award, Bookmark,
+  DollarSign, TrendingUp, Loader, Menu, X, Award, Bookmark,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useUserData } from '../../hooks/useUserData';
 import { useNavigate } from 'react-router-dom';
+import type { IndividualGoal, TeamGoal, QuickListItem } from '../../types';
 import metaBuyLogo from '../../assets/images/metabuylogo.png';
 import './workspace.css';
 
-// Interfaces para tipar los objetos
-interface Goal {
-  id: string;
-  title: string;
-  targetAmount: number;
-  savedAmount: number;
-  icon: string;
-  isCompleted?: boolean;
-  members?: string[]; // Para metas de equipo
-}
-
-interface QuickListItem {
-  id: string;
-  text: string;
-  price: number;
-  completed: boolean;
-}
-
 interface GoalCardProps {
-  goal: Goal;
+  goal: IndividualGoal | TeamGoal;
   isTeam?: boolean;
 }
 
@@ -42,11 +25,6 @@ const listVariants = {
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 },
-};
-
-const getIconComponent = (iconName: string) => {
-  const iconMap = { Star, Gift, Plane, DollarSign, Award, Bookmark };
-  return iconMap[iconName as keyof typeof iconMap] || Award;
 };
 
 const Workspace = () => {
@@ -99,19 +77,18 @@ const Workspace = () => {
     );
   }
 
-  // Componente GoalCard tipado correctamente
+  // Componente GoalCard actualizado
   const GoalCard: React.FC<GoalCardProps> = ({ goal, isTeam = false }) => {
     const progress = Math.round((goal.savedAmount / goal.targetAmount) * 100);
-    const IconComponent = getIconComponent(goal.icon);
     
     return (
       <div className="goal-card">
         <div className="goal-card-header">
           <div className="goal-card-icon">
-            <IconComponent size={20} />
+            <Bookmark size={20} />
           </div>
           <span className="goal-card-title">{goal.title}</span>
-          {isTeam && goal.members && (
+          {isTeam && 'members' in goal && goal.members && (
             <div className="team-avatars">
               {goal.members.slice(0, 3).map((memberId: string, index: number) => 
                 <img 
@@ -240,7 +217,7 @@ const Workspace = () => {
               {individualGoals.length === 0 ? (
                 <div className="empty-state">No tienes metas individuales aún. ¡Crea tu primera meta!</div>
               ) : (
-                individualGoals.map((goal: Goal) => <GoalCard key={goal.id} goal={goal} />)
+                individualGoals.map((goal: IndividualGoal) => <GoalCard key={goal.id} goal={goal} />)
               )}
             </div>
             
@@ -251,7 +228,7 @@ const Workspace = () => {
               {teamGoals.length === 0 ? (
                 <div className="empty-state">No tienes metas en equipo aún. ¡Crea o únete a una meta grupal!</div>
               ) : (
-                teamGoals.map((goal: Goal) => <GoalCard key={goal.id} goal={goal} isTeam />)
+                teamGoals.map((goal: TeamGoal) => <GoalCard key={goal.id} goal={goal} isTeam />)
               )}
             </div>
           </motion.div>

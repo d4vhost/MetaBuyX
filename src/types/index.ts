@@ -18,8 +18,6 @@ export interface IndividualGoal {
   description?: string;
   targetAmount: number;
   savedAmount: number;
-  icon: string;
-  category: string;
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;
   isCompleted: boolean;
@@ -31,8 +29,6 @@ export interface TeamGoal {
   description?: string;
   targetAmount: number;
   savedAmount: number;
-  icon: string;
-  category: string;
   createdBy: string;
   members: string[];
   memberContributions: { [userId: string]: number };
