@@ -1,13 +1,13 @@
-// src/pages/Workspace/workspace.tsx - Versión final corregida
+// src/pages/Workspace/workspace.tsx - Versión final corregida con navegación
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Users, CheckSquare, Settings, LogOut, PlusCircle, Search,
-  DollarSign, TrendingUp, Loader, Menu, X, Award, Bookmark, User,
+  DollarSign, TrendingUp, Loader, Menu, X, Award, Bookmark, User
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useUserData } from '../../hooks/useUserData';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import type { IndividualGoal, TeamGoal, QuickListItem } from '../../types';
 import metaBuyLogo from '../../assets/images/metabuylogo.png';
 import './workspace.css';
@@ -34,6 +34,7 @@ const Workspace = () => {
     addSavingToGoal, contributeToTeamGoal, toggleQuickListItem
   } = useUserData();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
 
@@ -136,10 +137,10 @@ const Workspace = () => {
   ];
 
   const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', active: true },
-    { icon: Award, label: 'Mis Metas' },
-    { icon: Users, label: 'Metas en Equipo' },
-    { icon: CheckSquare, label: 'Listas' },
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/workspace' },
+    { icon: Award, label: 'Mis Metas', path: '/targets' },
+    { icon: Users, label: 'Metas en Equipo', path: '/teamboard' },
+    { icon: CheckSquare, label: 'Listas', path: '/tasks' },
   ];
 
   if (loading) {
@@ -214,10 +215,15 @@ const Workspace = () => {
         
         <nav className="sidebar-nav">
           {navItems.map((item, index) => (
-            <a key={index} href="#" className={`nav-link ${item.active ? 'active' : ''}`} onClick={closeSidebar}>
+            <Link 
+              key={index} 
+              to={item.path} 
+              className={`nav-link ${location.pathname === item.path ? 'active' : ''}`} 
+              onClick={closeSidebar}
+            >
               <item.icon size={20} />
               <span>{item.label}</span>
-            </a>
+            </Link>
           ))}
         </nav>
         
@@ -248,7 +254,7 @@ const Workspace = () => {
                 <Menu size={24} />
               </button>
               <div>
-                <h1 className="header-title">Bienvenido, {userName.split(' ')[0]} 👋</h1>
+                <h1 className="header-title">Bienvenido, {userName.split(' ')[0]} <TrendingUp size={24} className="welcome-icon float" /></h1>
                 <p className="header-subtitle">Aquí tienes un resumen de tus planes de ahorro.</p>
               </div>
             </div>
@@ -286,7 +292,7 @@ const Workspace = () => {
           >
             <div className="section-header">
               <h2>Mis Metas Individuales</h2>
-              <a href="#" className="section-link">Ver todas</a>
+              <Link to="/targets" className="section-link">Ver todas</Link>
             </div>
             <div className="goals-list">
               {individualGoals.length === 0 ? (
@@ -298,6 +304,7 @@ const Workspace = () => {
             
             <div className="section-header">
               <h2>Metas en Equipo</h2>
+              <Link to="/teamboard" className="section-link">Ver todas</Link>
             </div>
             <div className="goals-list">
               {teamGoals.length === 0 ? (
@@ -316,7 +323,7 @@ const Workspace = () => {
           >
             <div className="section-header">
               <h2>Lista Rápida</h2>
-              <a href="#" className="section-link">Ver detalles</a>
+              <Link to="/tasks" className="section-link">Ver detalles</Link>
             </div>
             <div className="quick-list-card">
               {quickListItems.length === 0 ? (

@@ -746,6 +746,11 @@ body {
   color: var(--color-text-muted); 
 }
 
+.welcome-icon.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+
 /* ============================= */
 /*        UTILITY STYLES         */
 /* ============================= */
