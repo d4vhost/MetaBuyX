@@ -1,9 +1,9 @@
-// src/pages/Workspace/workspace.tsx
+// src/pages/Workspace/workspace.tsx - Versión final corregida
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Users, CheckSquare, Settings, LogOut, PlusCircle, Search,
-  DollarSign, TrendingUp, Loader, Menu, X, Award, Bookmark,
+  DollarSign, TrendingUp, Loader, Menu, X, Award, Bookmark, User,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useUserData } from '../../hooks/useUserData';
@@ -35,10 +35,29 @@ const Workspace = () => {
   } = useUserData();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
   const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Usuario';
   const userEmail = currentUser?.email || '';
-  const userAvatar = currentUser?.photoURL || `https://i.pravatar.cc/150?u=${currentUser?.uid}`;
+  const userAvatar = currentUser?.photoURL || null;
+
+  // Reset avatarError cuando cambie el usuario o su photoURL
+  useEffect(() => {
+    setAvatarError(false);
+  }, [currentUser?.photoURL, currentUser?.uid]);
+
+  // Función mejorada para manejar el avatar del usuario
+  const getUserAvatarUrl = (photoURL: string | null | undefined) => {
+    if (!photoURL) return null;
+    
+    // Para URLs de Google, usar un proxy CORS
+    if (photoURL.includes('googleusercontent.com')) {
+      // Usar el servicio weserv.nl que actúa como proxy CORS para imágenes
+      return `https://images.weserv.nl/?url=${encodeURIComponent(photoURL)}&w=96&h=96&fit=cover&mask=circle`;
+    }
+    
+    return photoURL;
+  };
 
   const handleLogout = async () => {
     try {
@@ -53,6 +72,62 @@ const Workspace = () => {
   const handleContributeToTeam = (goalId: string) => contributeToTeamGoal(goalId, 100);
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
+
+  // Función para manejar error de carga de imagen
+  const handleAvatarError = () => {
+    console.log('Error cargando avatar:', userAvatar);
+    setAvatarError(true);
+  };
+
+  // Función para manejar carga exitosa de imagen
+  const handleAvatarLoad = () => {
+    console.log('Avatar cargado correctamente:', userAvatar);
+    setAvatarError(false);
+  };
+
+  // Componente para el avatar del usuario
+  const UserAvatar = () => {
+    const processedAvatarUrl = getUserAvatarUrl(userAvatar);
+    
+    // Función para obtener las iniciales
+    const getInitials = () => {
+      if (userName && userName !== 'Usuario') {
+        const names = userName.trim().split(' ');
+        if (names.length >= 2) {
+          return (names[0][0] + names[1][0]).toUpperCase();
+        }
+        return userName.substring(0, 2).toUpperCase();
+      }
+      return null;
+    };
+
+    const initials = getInitials();
+    
+    // Si hay photoURL y no ha fallado, mostrar la imagen
+    if (processedAvatarUrl && !avatarError) {
+      return (
+        <img 
+          src={processedAvatarUrl} 
+          alt="User Avatar" 
+          className="user-avatar"
+          onError={handleAvatarError}
+          onLoad={handleAvatarLoad}
+          crossOrigin="anonymous"
+        />
+      );
+    }
+    
+    // Fallback: mostrar las iniciales del usuario o icono de usuario
+    return (
+      <div className="user-avatar user-avatar-fallback">
+        {initials ? (
+          <span className="user-initials">{initials}</span>
+        ) : (
+          <User size={20} />
+        )}
+      </div>
+    );
+  };
 
   const summaryData = [
     { title: 'Ahorro Total', value: `$${statistics.totalSavings.toLocaleString()}`, icon: DollarSign, color: 'var(--color-progress)' },
@@ -156,7 +231,7 @@ const Workspace = () => {
             <span>Cerrar Sesión</span>
           </button>
           <div className="user-profile">
-            <img src={userAvatar} alt="User Avatar" className="user-avatar" />
+            <UserAvatar />
             <div className="user-info">
               <span className="user-name">{userName}</span>
               <span className="user-email">{userEmail}</span>
