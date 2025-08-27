@@ -11,6 +11,17 @@ export interface UserProfile {
   activeGoals: number;
 }
 
+// Nueva interfaz para SubGoal
+export interface SubGoal {
+  id: string;
+  goalId: string;
+  title: string;
+  amount: number;
+  savedAmount: number;
+  completed: boolean;
+  createdAt: Timestamp | null;
+}
+
 export interface IndividualGoal {
   id: string;
   userId: string;
@@ -50,10 +61,16 @@ export interface QuickListItem {
 export type CreateIndividualGoal = Omit<IndividualGoal, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'isCompleted' | 'savedAmount'>;
 export type CreateTeamGoal = Omit<TeamGoal, 'id' | 'createdBy' | 'members' | 'memberContributions' | 'createdAt' | 'updatedAt' | 'isCompleted' | 'savedAmount'>;
 export type CreateQuickListItem = Omit<QuickListItem, 'id' | 'userId' | 'createdAt' | 'completed'>;
+export type CreateSubGoal = Omit<SubGoal, 'id' | 'goalId' | 'createdAt' | 'savedAmount' | 'completed'>;
 
 // Tipo para estadísticas del usuario
 export interface UserStatistics {
   totalSavings: number;
   activeGoals: number;
   averageProgress: number;
+}
+
+// Interfaz extendida que incluye las sub-metas
+export interface IndividualGoalWithSubGoals extends IndividualGoal {
+  subGoals?: SubGoal[];
 }

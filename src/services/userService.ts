@@ -20,7 +20,10 @@ import type {
   QuickListItem, 
   CreateIndividualGoal, 
   CreateTeamGoal,
-  CreateQuickListItem
+  CreateQuickListItem,
+  SubGoal,
+  CreateSubGoal,
+  IndividualGoalWithSubGoals
 } from '../types';
 
 // Servicios para el perfil de usuario
@@ -98,6 +101,32 @@ export const goalService = {
     })) as IndividualGoal[];
   },
 
+  // Obtener metas individuales con sus sub-metas
+  async getUserIndividualGoalsWithSubGoals(userId: string): Promise<IndividualGoalWithSubGoals[]> {
+    const goalsRef = collection(db, 'users', userId, 'goals');
+    const querySnapshot = await getDocs(goalsRef);
+    
+    const goalsWithSubGoals: IndividualGoalWithSubGoals[] = [];
+    
+    for (const goalDoc of querySnapshot.docs) {
+      const goalData = {
+        id: goalDoc.id,
+        userId,
+        ...goalDoc.data()
+      } as IndividualGoal;
+      
+      // Obtener sub-metas de cada meta usando subGoalService directamente
+      const subGoals = await subGoalService.getSubGoals(userId, goalDoc.id);
+      
+      goalsWithSubGoals.push({
+        ...goalData,
+        subGoals
+      });
+    }
+    
+    return goalsWithSubGoals;
+  },
+
   // Agregar ahorro a una meta individual
   async addSavingToGoal(userId: string, goalId: string, amount: number): Promise<void> {
     const goalRef = doc(db, 'users', userId, 'goals', goalId);
@@ -136,6 +165,16 @@ export const goalService = {
     
     if (goalSnap.exists()) {
       const goalData = goalSnap.data();
+      
+      // Eliminar todas las sub-metas primero
+      const subGoalsRef = collection(db, 'users', userId, 'goals', goalId, 'subGoals');
+      const subGoalsSnap = await getDocs(subGoalsRef);
+      
+      for (const subGoalDoc of subGoalsSnap.docs) {
+        await deleteDoc(subGoalDoc.ref);
+      }
+      
+      // Luego eliminar la meta principal
       await deleteDoc(goalRef);
       
       // Si no estaba completada, decrementar metas activas
@@ -148,6 +187,68 @@ export const goalService = {
     }
   }
 };
+
+// Servicios para sub-metas
+export const subGoalService = {
+  // Crear nueva sub-meta
+  async createSubGoal(userId: string, goalId: string, subGoalData: CreateSubGoal): Promise<string> {
+    const subGoalsRef = collection(db, 'users', userId, 'goals', goalId, 'subGoals');
+    const docRef = await addDoc(subGoalsRef, {
+      ...subGoalData,
+      savedAmount: 0,
+      completed: false,
+      createdAt: serverTimestamp(),
+    });
+    
+    return docRef.id;
+  },
+
+  // Obtener sub-metas de una meta específica
+  async getSubGoals(userId: string, goalId: string): Promise<SubGoal[]> {
+    const subGoalsRef = collection(db, 'users', userId, 'goals', goalId, 'subGoals');
+    const querySnapshot = await getDocs(subGoalsRef);
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      goalId,
+      ...doc.data()
+    })) as SubGoal[];
+  },
+
+  // Agregar ahorro a una sub-meta
+  async addSavingToSubGoal(userId: string, goalId: string, subGoalId: string, amount: number): Promise<void> {
+    const subGoalRef = doc(db, 'users', userId, 'goals', goalId, 'subGoals', subGoalId);
+    const subGoalSnap = await getDoc(subGoalRef);
+    
+    if (subGoalSnap.exists()) {
+      const subGoalData = subGoalSnap.data() as Omit<SubGoal, 'id' | 'goalId'>;
+      const newSavedAmount = subGoalData.savedAmount + amount;
+      const isCompleted = newSavedAmount >= subGoalData.amount;
+      
+      await updateDoc(subGoalRef, {
+        savedAmount: newSavedAmount,
+        completed: isCompleted,
+      });
+      
+      // También actualizar la meta principal
+      await goalService.addSavingToGoal(userId, goalId, amount);
+    }
+  },
+
+  // Eliminar sub-meta
+  async deleteSubGoal(userId: string, goalId: string, subGoalId: string): Promise<void> {
+    const subGoalRef = doc(db, 'users', userId, 'goals', goalId, 'subGoals', subGoalId);
+    await deleteDoc(subGoalRef);
+  },
+
+  // Actualizar sub-meta
+  async updateSubGoal(userId: string, goalId: string, subGoalId: string, updates: Partial<SubGoal>): Promise<void> {
+    const subGoalRef = doc(db, 'users', userId, 'goals', goalId, 'subGoals', subGoalId);
+    await updateDoc(subGoalRef, updates);
+  }
+};
+
+
 
 // Servicios para metas en equipo (mantener como colección raíz ya que involucran múltiples usuarios)
 export const teamGoalService = {
