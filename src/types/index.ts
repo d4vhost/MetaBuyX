@@ -57,6 +57,7 @@ export interface QuickListItem {
   createdAt: Timestamp | null;
 }
 
+
 // Tipos para crear nuevos elementos
 export type CreateIndividualGoal = Omit<IndividualGoal, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'isCompleted' | 'savedAmount'>;
 export type CreateTeamGoal = Omit<TeamGoal, 'id' | 'createdBy' | 'members' | 'memberContributions' | 'createdAt' | 'updatedAt' | 'isCompleted' | 'savedAmount'>;

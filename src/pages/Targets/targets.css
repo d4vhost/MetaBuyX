@@ -753,6 +753,7 @@ body {
   gap: var(--space-md);
 }
 
+
 .subgoal-info {
   flex: 1;
   min-width: 0;
@@ -784,8 +785,9 @@ body {
 .subgoal-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
   flex-shrink: 0;
+  flex-wrap: nowrap;
 }
 
 .btn-add-saving-sub {
@@ -802,6 +804,22 @@ body {
   align-items: center;
   gap: var(--space-xs);
   white-space: nowrap;
+  height: 28px; /* Consistent height */
+}
+
+.btn-edit-sub,
+.btn-delete-sub {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .btn-add-saving-sub:hover {
@@ -811,16 +829,6 @@ body {
 }
 
 .btn-delete-sub {
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
   color: var(--color-error);
 }
 
@@ -1149,6 +1157,543 @@ body {
 }
 
 /* ============================= */
+/*     NUEVOS ESTILOS FALTANTES  */
+/* ============================= */
+
+/* Selector de tipo de meta */
+.goal-type-selector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.type-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.type-option:hover {
+  border-color: var(--color-border-hover);
+  background-color: var(--color-surface-hover);
+}
+
+.type-option.active {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-light);
+}
+
+.type-option > svg {
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.type-option.active > svg {
+  color: var(--color-accent);
+}
+
+.type-title {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-xs);
+}
+
+.type-desc {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+/* Formulario de sub-metas temporales */
+.subgoal-form {
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  background-color: var(--color-surface-light);
+}
+
+.subgoal-input-row {
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-end;
+}
+
+.subgoal-input-row input[type="text"] {
+  flex: 2;
+}
+
+.subgoal-input-row .amount-input {
+  flex: 1;
+  min-width: 120px;
+}
+
+.btn-add-temp {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-success);
+  background: var(--color-success);
+  color: var(--color-surface);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-add-temp:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+/* Lista de sub-metas temporales */
+.temp-subgoals-list {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.temp-subgoals-list h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-md);
+}
+
+.temp-subgoal-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-sm);
+  gap: var(--space-md);
+}
+
+.temp-subgoal-title {
+  flex: 1;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+}
+
+.temp-subgoal-amount {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.btn-remove-temp {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: var(--color-error);
+  color: var(--color-surface);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-remove-temp:hover {
+  background: #b91c1c;
+}
+
+.temp-total {
+  padding: var(--space-md);
+  background-color: var(--color-accent-light);
+  border-radius: var(--radius-md);
+  text-align: center;
+  margin-top: var(--space-md);
+  border: 1px solid var(--color-border);
+}
+
+.temp-total strong {
+  color: var(--color-accent);
+  font-size: 1rem;
+}
+
+/* Navegación de sub-metas */
+.subgoal-navigation {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-left: auto;
+}
+
+.nav-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: var(--color-text-secondary);
+}
+
+.nav-btn:hover {
+  background: var(--color-info);
+  color: var(--color-surface);
+  border-color: var(--color-info);
+}
+
+.subgoal-counter {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  min-width: 60px;
+  text-align: center;
+}
+
+/* Montos rápidos en modales */
+.quick-amounts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background-color: var(--color-surface-light);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+}
+
+.quick-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.quick-buttons {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.btn-quick-amount {
+  padding: var(--space-sm) var(--space-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 60px;
+}
+
+.btn-quick-amount:hover {
+  background: var(--color-accent);
+  color: var(--color-surface);
+  border-color: var(--color-accent);
+}
+
+/* Ajustes responsive para nuevos elementos */
+@media (max-width: 768px) {
+  .subgoal-input-row {
+    flex-direction: column;
+  }
+  
+  .subgoal-input-row .amount-input {
+    min-width: 100%;
+  }
+  
+  .quick-buttons {
+    justify-content: center;
+  }
+  
+  .subgoal-navigation {
+    margin-left: 0;
+    margin-top: var(--space-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .type-option {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--space-md);
+  }
+  
+  .temp-subgoal-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+  
+  .temp-subgoal-amount {
+    align-self: flex-end;
+  }
+  
+  .btn-remove-temp {
+    align-self: center;
+  }
+}
+
+/* ============================= */
+/*   MISSING SUB-GOAL BUTTONS    */
+/* ============================= */
+
+.btn-edit-sub {
+  color: var(--color-text-secondary);
+}
+
+.btn-edit-sub:hover {
+  background: var(--color-accent);
+  color: var(--color-surface);
+  border-color: var(--color-accent);
+}
+
+
+.btn-edit-sub:focus {
+  outline: 2px solid var(--color-accent-light);
+  outline-offset: 2px;
+}
+
+
+.btn-delete-sub:focus {
+  outline: 2px solid rgba(220, 38, 38, 0.2);
+  outline-offset: 2px;
+}
+
+/* ============================= */
+/*     CONFIRMATION MODAL        */
+/* ============================= */
+
+.confirmation-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  padding: var(--space-lg);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.confirmation-modal {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 400px;
+  padding: var(--space-2xl);
+  text-align: center;
+  animation: slideIn 0.3s ease-out;
+}
+
+.confirmation-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--space-lg);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(220, 38, 38, 0.1);
+  color: var(--color-error);
+  border: 2px solid rgba(220, 38, 38, 0.2);
+}
+
+.confirmation-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-md);
+}
+
+.confirmation-message {
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin-bottom: var(--space-xl);
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+}
+
+.btn-confirm-cancel {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  padding: var(--space-md) var(--space-xl);
+  border-radius: var(--radius-lg);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.btn-confirm-cancel:hover {
+  background-color: var(--color-surface-hover);
+  border-color: var(--color-border-hover);
+}
+
+.btn-confirm-delete {
+  background-color: var(--color-error);
+  color: var(--color-surface);
+  border: 1px solid var(--color-error);
+  padding: var(--space-md) var(--space-xl);
+  border-radius: var(--radius-lg);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.btn-confirm-delete:hover:not(:disabled) {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-confirm-delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ============================= */
+/*        ANIMATIONS             */
+/* ============================= */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ============================= */
+/*     LOADING STATES            */
+/* ============================= */
+
+.btn-loading {
+  position: relative;
+  color: transparent !important;
+}
+
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+  color: inherit;
+}
+
+.btn-confirm-delete.btn-loading::after {
+  border-color: var(--color-surface);
+  border-top-color: transparent;
+}
+
+/* ============================= */
+/*      RESPONSIVE ADJUSTMENTS   */
+/* ============================= */
+
+@media (max-width: 480px) {
+  .confirmation-modal {
+    padding: var(--space-lg);
+    margin: var(--space-md);
+  }
+  
+  .confirmation-actions {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+  
+  .btn-confirm-cancel,
+  .btn-confirm-delete {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .confirmation-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: var(--space-md);
+  }
+}
+
+/* ============================= */
+/*      ACCESSIBILITY STATES     */
+/* ============================= */
+
+.btn-confirm-cancel:focus,
+.btn-confirm-delete:focus {
+  outline: 2px solid var(--color-accent-light);
+  outline-offset: 2px;
+}
+
+.btn-confirm-delete:focus {
+  outline-color: rgba(220, 38, 38, 0.2);
+}
+
+/* ============================= */
+/*      REDUCED MOTION           */
+/* ============================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .confirmation-overlay,
+  .confirmation-modal {
+    animation: none !important;
+  }
+  
+  .btn-edit-sub:hover,
+  .btn-delete-sub:hover,
+  .btn-confirm-delete:hover {
+    transform: none !important;
+  }
+}
+
+/* ============================= */
 /*        RESPONSIVE DESIGN      */
 /* ============================= */
 
@@ -1255,6 +1800,12 @@ body {
   .targets-main {
     padding: var(--space-md);
   }
+
+  .subgoal-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-sm);
+  }
   
   .targets-sidebar {
     width: 100%;
@@ -1304,6 +1855,16 @@ body {
   
   .modal-form {
     padding-bottom: var(--space-lg);
+  }
+
+   .subgoal-actions {
+    align-self: flex-end;
+    gap: var(--space-sm);
+  }
+  
+  .btn-add-saving-sub {
+    font-size: 0.7rem;
+    padding: var(--space-xs);
   }
 }
 

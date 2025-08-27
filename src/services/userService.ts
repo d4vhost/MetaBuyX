@@ -127,6 +127,15 @@ export const goalService = {
     return goalsWithSubGoals;
   },
 
+  // Actualizar una meta individual
+  async updateGoal(userId: string, goalId: string, updates: Partial<CreateIndividualGoal>): Promise<void> {
+    const goalRef = doc(db, 'users', userId, 'goals', goalId);
+    await updateDoc(goalRef, {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    });
+  },
+
   // Agregar ahorro a una meta individual
   async addSavingToGoal(userId: string, goalId: string, amount: number): Promise<void> {
     const goalRef = doc(db, 'users', userId, 'goals', goalId);
@@ -247,8 +256,6 @@ export const subGoalService = {
     await updateDoc(subGoalRef, updates);
   }
 };
-
-
 
 // Servicios para metas en equipo (mantener como colección raíz ya que involucran múltiples usuarios)
 export const teamGoalService = {
