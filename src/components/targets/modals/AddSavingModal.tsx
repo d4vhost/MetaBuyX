@@ -1,8 +1,7 @@
-// src/components/targets/modals/AddSavingModal.tsx
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { X, PlusCircle } from 'lucide-react';
-import './AddSavingModal.css'
+import './AddSavingModal.css';
 
 interface AddSavingModalProps {
   isOpen: boolean;
@@ -13,7 +12,8 @@ interface AddSavingModalProps {
   loading?: boolean;
 }
 
-const AddSavingModal: React.FC<AddSavingModalProps> = ({
+// Usamos React.memo para evitar renders innecesarios si las props no cambian
+const AddSavingModal: React.FC<AddSavingModalProps> = React.memo(({
   isOpen,
   onClose,
   onAddSaving,
@@ -23,53 +23,45 @@ const AddSavingModal: React.FC<AddSavingModalProps> = ({
 }) => {
   const [customAmount, setCustomAmount] = useState<string>('');
 
-  const resetForm = () => {
+  // useCallback para memorizar la función y evitar que se recree
+  const handleClose = useCallback(() => {
     setCustomAmount('');
-  };
-
-  const handleClose = () => {
-    resetForm();
     onClose();
-  };
+  }, [onClose]);
 
-  const handleNumericInputWithLimit = (value: string) => {
-    // Solo permitir números y punto decimal
-    const numericValue = value.replace(/[^0-9.]/g, '');
-    
-    // Evitar múltiples puntos decimales
+  // useCallback para optimizar el manejador de entrada
+  const handleNumericInputWithLimit = useCallback((value: string) => {
+    // Permite solo números y un único punto decimal
+    const numericValue = value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+
+    // Limita a dos decimales
     const parts = numericValue.split('.');
-    if (parts.length > 2) {
-      return;
-    }
-    
-    // Limitar decimales a 2 dígitos
     if (parts[1] && parts[1].length > 2) {
       return;
     }
-    
-    // Verificar si el valor excede el máximo permitido
+
+    // Si el valor excede el máximo, lo establece al máximo
     const numValue = parseFloat(numericValue);
-    
     if (!isNaN(numValue) && numValue > maxAmount) {
-      // Si excede, establecer el valor máximo permitido
       setCustomAmount(maxAmount.toString());
       return;
     }
-    
-    setCustomAmount(numericValue);
-  };
 
-  const handleSubmit = async () => {
+    setCustomAmount(numericValue);
+  }, [maxAmount]);
+
+  // useCallback para memorizar la función de envío
+  const handleSubmit = useCallback(async () => {
     if (loading) return;
 
     const finalAmount = parseFloat(customAmount);
     if (isNaN(finalAmount) || finalAmount <= 0) {
-      alert('Por favor ingresa una cantidad válida');
+      alert('Por favor ingresa una cantidad válida.');
       return;
     }
 
     if (finalAmount > maxAmount) {
-      alert(`No puedes agregar más de $${maxAmount.toLocaleString()}. Esta meta solo necesita $${maxAmount.toLocaleString()} más para completarse.`);
+      alert(`No puedes agregar más de $${maxAmount.toLocaleString()}. Esta meta solo necesita $${maxAmount.toLocaleString()} para completarse.`);
       return;
     }
 
@@ -80,33 +72,36 @@ const AddSavingModal: React.FC<AddSavingModalProps> = ({
       console.error('Error agregando ahorro:', error);
       alert('Error al agregar ahorro. Intenta de nuevo.');
     }
-  };
+  }, [customAmount, loading, maxAmount, onAddSaving, handleClose]);
 
-  // Generar botones de montos rápidos
-  const generateQuickAmounts = () => {
-    const quickAmounts = [25, 50, 100, 200].filter(amount => amount <= maxAmount);
-    
-    // Si no hay montos rápidos menores al máximo, mostrar el máximo
-    if (quickAmounts.length === 0 && maxAmount > 0) {
-      quickAmounts.push(Math.floor(maxAmount));
+  // useMemo para calcular los montos rápidos solo cuando maxAmount cambia
+  const quickAmounts = useMemo(() => {
+    const amounts = [25, 50, 100, 200].filter(amount => amount <= maxAmount);
+    if (amounts.length === 0 && maxAmount > 0) {
+      // Si ningún monto rápido es viable, ofrece el máximo posible (redondeado hacia abajo)
+      return [Math.floor(maxAmount)];
     }
-    
-    return quickAmounts;
-  };
+    return amounts;
+  }, [maxAmount]);
+
+  // Variable para mejorar la legibilidad en el JSX
+  const amountToAdd = parseFloat(customAmount || '0');
+  const buttonText = amountToAdd > 0 ? `Añadir $${amountToAdd.toLocaleString()}` : 'Añadir';
 
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={handleClose}>
-      <motion.div 
-        className="modal-content"
-        initial={{ opacity: 0, scale: 0.9 }}
+      <motion.div
+        className="modal-content add-saving-modal"
+        initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
           <h2>Añadir Dinero</h2>
-          <button className="modal-close" onClick={handleClose}>
+          <button className="modal-close" onClick={handleClose} aria-label="Cerrar modal">
             <X size={24} />
           </button>
         </div>
@@ -116,7 +111,7 @@ const AddSavingModal: React.FC<AddSavingModalProps> = ({
             <p><strong>Meta:</strong> {goalTitle}</p>
           </div>
         )}
-        
+
         <div className="modal-form">
           <div className="form-group">
             <label htmlFor="customAmount">¿Cuánto quieres añadir? *</label>
@@ -124,56 +119,57 @@ const AddSavingModal: React.FC<AddSavingModalProps> = ({
               <span className="currency">$</span>
               <input
                 type="text"
+                inputMode="decimal" // Mejora la experiencia en móviles
                 id="customAmount"
                 value={customAmount}
                 onChange={(e) => handleNumericInputWithLimit(e.target.value)}
-                placeholder="0"
+                placeholder="0.00"
                 autoFocus
               />
             </div>
             <small className="amount-hint">
-              Máximo permitido: ${maxAmount.toLocaleString()}
+              Puedes añadir hasta ${maxAmount.toLocaleString()}
             </small>
           </div>
-          
+
           <div className="quick-amounts">
             <span className="quick-label">Montos rápidos:</span>
             <div className="quick-buttons">
-              {generateQuickAmounts().map(amount => (
-                <button 
+              {quickAmounts.map(amount => (
+                <button
                   key={amount}
-                  type="button" 
+                  type="button"
                   className="btn-quick-amount"
-                  onClick={() => setCustomAmount(amount.toString())}
+                  onClick={() => handleNumericInputWithLimit(amount.toString())}
                 >
                   ${amount}
                 </button>
               ))}
             </div>
           </div>
-          
+
           <div className="form-actions">
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="btn-secondary"
               onClick={handleClose}
             >
               Cancelar
             </button>
-            <button 
+            <button
               type="button"
               className="btn-primary"
               onClick={handleSubmit}
-              disabled={!customAmount || parseFloat(customAmount) <= 0 || loading}
+              disabled={amountToAdd <= 0 || loading}
             >
               <PlusCircle size={16} />
-              Añadir ${parseFloat(customAmount || '0').toLocaleString()}
+              {buttonText}
             </button>
           </div>
         </div>
       </motion.div>
     </div>
   );
-};
+});
 
 export default AddSavingModal;

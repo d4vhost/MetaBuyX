@@ -1,10 +1,10 @@
-/* src/pages/Targets/targets.css - Fixed with proper card sizing and terminal design */
+/* src/pages/Targets/targets.css - Isolated styles for targets interface only */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* ============================= */
 /*          CSS VARIABLES        */
 /* ============================= */
-:root {
+.targets-layout {
   /* Colors */
   --color-background: #FAF8F5;
   --color-surface: #FFFFFF;
@@ -496,7 +496,6 @@
   transform: translateY(-2px);
 }
 
-/* REMOVED: Terminal titlebar that was causing the gray rectangle */
 /* Terminal traffic lights - repositioned to header with larger size */
 .targets-layout .goal-card-header::before {
   content: '';
@@ -1387,4 +1386,159 @@
 .targets-layout .nav-btn:focus {
   outline: 2px solid var(--color-accent-light);
   outline-offset: 2px;
+}
+
+/* ============================= */
+/*     MODAL OVERRIDES - ADD TO END OF targets.css   */
+/* ============================= */
+
+/* Override targets layout styles for modals */
+.modal-overlay {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-feature-settings: normal !important;
+  letter-spacing: normal !important;
+}
+
+.modal-overlay,
+.modal-overlay *,
+.modal-content,
+.modal-content * {
+  box-sizing: border-box !important;
+}
+
+/* Ensure modal content doesn't inherit targets grid/flex constraints */
+.modal-content {
+  position: static !important;
+  transform: none !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  min-width: 380px !important;
+  height: auto !important;
+  min-height: auto !important;
+  max-height: 85vh !important;
+  flex: none !important;
+  grid-column: auto !important;
+  grid-row: auto !important;
+}
+
+/* Override any inherited text styles */
+.modal-content h1,
+.modal-content h2,
+.modal-content h3,
+.modal-content h4,
+.modal-content h5,
+.modal-content h6 {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-feature-settings: normal !important;
+  letter-spacing: normal !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+}
+
+.modal-content p,
+.modal-content span,
+.modal-content div,
+.modal-content label,
+.modal-content input,
+.modal-content button {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-feature-settings: normal !important;
+  letter-spacing: normal !important;
+  line-height: 1.5 !important;
+}
+
+/* Ensure modal buttons don't inherit targets button styles */
+.modal-content button {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-feature-settings: normal !important;
+  letter-spacing: normal !important;
+}
+
+/* Fix padding and margins that might be inherited */
+.modal-header {
+  padding: 2rem 2rem 0.5rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.modal-form {
+  padding: 0 2rem 2rem !important;
+}
+
+.modal-info {
+  margin: 0 2rem 1.5rem !important;
+  padding: 1rem 1.25rem !important;
+}
+
+/* Ensure proper spacing for form elements */
+.modal-form .form-group {
+  margin: 0 !important;
+  width: 100% !important;
+}
+
+.modal-form .amount-input {
+  width: 100% !important;
+  position: relative !important;
+}
+
+.modal-form .amount-input input {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: auto !important;
+}
+
+/* Fix quick amounts layout */
+.modal-form .quick-amounts {
+  width: 100% !important;
+  flex: none !important;
+}
+
+.modal-form .quick-buttons {
+  width: 100% !important;
+  flex-wrap: wrap !important;
+}
+
+/* Fix form actions */
+.modal-form .form-actions {
+  width: 100% !important;
+  flex: none !important;
+  margin-top: 0.5rem !important;
+}
+
+/* Mobile responsive overrides */
+@media (max-width: 640px) {
+  .modal-content {
+    min-width: 280px !important;
+    max-width: 95vw !important;
+  }
+  
+  .modal-header {
+    padding: 1.5rem 1.5rem 0.5rem !important;
+  }
+  
+  .modal-form {
+    padding: 0 1.5rem 1.5rem !important;
+  }
+  
+  .modal-info {
+    margin: 0 1.5rem 1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    min-width: 260px !important;
+  }
+  
+  .modal-header {
+    padding: 1rem 1rem 0.5rem !important;
+  }
+  
+  .modal-form {
+    padding: 0 1rem 1rem !important;
+  }
+  
+  .modal-info {
+    margin: 0 1rem 1rem !important;
+  }
 }
