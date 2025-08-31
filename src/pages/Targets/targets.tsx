@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, CheckSquare, Settings, LogOut, PlusCircle, Search,
   Loader, Menu, X, Award, Bookmark, User, Edit3,
   Trash2, Target, Calendar, CheckCircle, Plus, ChevronDown, ChevronRight,
-  List, Package, ChevronLeft, Save
+  List, Package, ChevronLeft
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useUserData } from '../../hooks/useUserData';
@@ -14,9 +14,17 @@ import type {
   CreateIndividualGoal, 
   CreateSubGoal, 
   IndividualGoalWithSubGoals, 
-  SubGoal  // ← Added this import
+  SubGoal
 } from '../../types';
 import metaBuyLogo from '../../assets/images/metabuylogo.png';
+import {
+  CreateGoalModal,
+  EditGoalModal,
+  CreateSubGoalModal,
+  EditSubGoalModal,
+  AddSavingModal,
+  AddSubSavingModal
+} from '../../components/targets/modals';
 import './targets.css';
 
 const listVariants = {
@@ -29,14 +37,9 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
-
-type GoalType = 'simple' | 'detailed';
-
 const Targets = () => {
   const { currentUser, logout } = useAuth();
-  const { 
-    loading, addSavingToGoal
-  } = useUserData();
+  const { loading, addSavingToGoal } = useUserData();
   
   const refreshUserData = async () => {
     window.location.reload();
@@ -46,168 +49,34 @@ const Targets = () => {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  
+  // Estados para modales
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showSubGoalModal, setShowSubGoalModal] = useState(false);
   const [showAddSavingModal, setShowAddSavingModal] = useState(false);
   const [showAddSubSavingModal, setShowAddSubSavingModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showEditSubGoalModal, setShowEditSubGoalModal] = useState(false);
+  
+  // Estados para filtros y búsqueda
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed'>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'progress' | 'target'>('newest');
-  const [createLoading, setCreateLoading] = useState(false);
+  
+  // Estados para navegación de submetas
+  const [currentSubGoalIndex, setCurrentSubGoalIndex] = useState<{[goalId: string]: number}>({});
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
+  
+  // Estados de loading y selecciones
+  const [createLoading, setCreateLoading] = useState(false);
   const [selectedGoalForSubGoal, setSelectedGoalForSubGoal] = useState<string | null>(null);
   const [selectedGoalForSaving, setSelectedGoalForSaving] = useState<string | null>(null);
   const [selectedSubGoalForSaving, setSelectedSubGoalForSaving] = useState<{ goalId: string; subGoalId: string } | null>(null);
   const [selectedGoalForEdit, setSelectedGoalForEdit] = useState<IndividualGoalWithSubGoals | null>(null);
-  const [goalsWithSubGoals, setGoalsWithSubGoals] = useState<IndividualGoalWithSubGoals[]>([]);
-  const [goalType, setGoalType] = useState<GoalType>('simple');
-  const [customAmount, setCustomAmount] = useState<string>('');
-  const [customSubAmount, setCustomSubAmount] = useState<string>('');
-
-  // 1. Agregar nuevo estado para editar sub-metas
-  const [showEditSubGoalModal, setShowEditSubGoalModal] = useState(false);
-  const [selectedSubGoalForEdit, setSelectedSubGoalForEdit] = useState<{ 
-    goalId: string; 
-    subGoal: SubGoal 
-  } | null>(null);
-  const [editSubGoal, setEditSubGoal] = useState<CreateSubGoal>({
-    title: '',
-    amount: 0
-  });
-
-  // 2. Función para verificar si una meta tiene sub-metas
-  const hasSubGoals = (goal: IndividualGoalWithSubGoals) => {
-    return goal.subGoals && goal.subGoals.length > 0;
-  };
-
-
-  // 4. Función para abrir modal de edición de sub-meta
-  const openEditSubGoalModal = (goalId: string, subGoal: SubGoal) => {
-    setSelectedSubGoalForEdit({ goalId, subGoal });
-    setEditSubGoal({
-      title: subGoal.title,
-      amount: subGoal.amount
-    });
-    setShowEditSubGoalModal(true);
-  };
-
-  // 5. Función para manejar edición de sub-meta
-  const handleEditSubGoal = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentUser || !selectedSubGoalForEdit || createLoading) return;
-
-    if (!editSubGoal.title.trim() || editSubGoal.amount <= 0) {
-      alert('Por favor completa todos los campos requeridos');
-      return;
-    }
-
-    setCreateLoading(true);
-    try {
-      // Actualizar la sub-meta
-      await subGoalService.updateSubGoal(
-        currentUser.uid, 
-        selectedSubGoalForEdit.goalId, 
-        selectedSubGoalForEdit.subGoal.id, 
-        {
-          title: editSubGoal.title,
-          amount: editSubGoal.amount
-        }
-      );
-
-      // Recalcular el monto total de la meta principal
-      await recalculateGoalTotal(selectedSubGoalForEdit.goalId);
-      
-      setShowEditSubGoalModal(false);
-      setSelectedSubGoalForEdit(null);
-      setEditSubGoal({ title: '', amount: 0 });
-      
-      // Refrescar datos
-      const goalsWithSubs = await goalService.getUserIndividualGoalsWithSubGoals(currentUser.uid);
-      setGoalsWithSubGoals(goalsWithSubs);
-    } catch (error) {
-      console.error('Error editando sub-meta:', error);
-      alert('Error al editar la sub-meta. Intenta de nuevo.');
-    } finally {
-      setCreateLoading(false);
-    }
-  };
-
-  // 6. Función para recalcular el total de la meta basado en sub-metas
-  const recalculateGoalTotal = async (goalId: string) => {
-    if (!currentUser) return;
-    
-    const subGoals = await subGoalService.getSubGoals(currentUser.uid, goalId);
-    const newTotal = subGoals.reduce((total, subGoal) => total + subGoal.amount, 0);
-    
-    await goalService.updateGoal(currentUser.uid, goalId, {
-      targetAmount: newTotal
-    });
-  };
-
-  const getMaxAllowedAmountForGoal = (goalId: string): number => {
-  const goal = goalsWithSubGoals.find(g => g.id === goalId);
+  const [selectedSubGoalForEdit, setSelectedSubGoalForEdit] = useState<SubGoal | null>(null);
   
-    if (goal) {
-      return goal.targetAmount - goal.savedAmount;
-    }
-    
-    return 0;
-  };
-
-  // 2. Función modificada para manejar entrada numérica con límite máximo
-  const handleNumericInputWithLimit = (
-    value: string, 
-    setter: (value: string) => void, 
-    maxAmount: number
-  ) => {
-    // Solo permitir números y punto decimal
-    const numericValue = value.replace(/[^0-9.]/g, '');
-    
-    // Evitar múltiples puntos decimales
-    const parts = numericValue.split('.');
-    if (parts.length > 2) {
-      return;
-    }
-    
-    // Limitar decimales a 2 dígitos
-    if (parts[1] && parts[1].length > 2) {
-      return;
-    }
-    
-    // Verificar si el valor excede el máximo permitido
-    const numValue = parseFloat(numericValue);
-    
-    if (!isNaN(numValue) && numValue > maxAmount) {
-      // Si excede, establecer el valor máximo permitido
-      setter(maxAmount.toString());
-      return;
-    }
-    
-    setter(numericValue);
-  };
-
-  // Estados para navegación de submetas
-  const [currentSubGoalIndex, setCurrentSubGoalIndex] = useState<{[goalId: string]: number}>({});
-
-  const [newGoal, setNewGoal] = useState<CreateIndividualGoal>({
-    title: '',
-    description: '',
-    targetAmount: 0
-  });
-
-  const [editGoal, setEditGoal] = useState<CreateIndividualGoal>({
-    title: '',
-    description: '',
-    targetAmount: 0
-  });
-
-  const [newSubGoal, setNewSubGoal] = useState<CreateSubGoal>({
-    title: '',
-    amount: 0
-  });
-
-  const [tempSubGoals, setTempSubGoals] = useState<CreateSubGoal[]>([]);
+  // Estado principal de metas
+  const [goalsWithSubGoals, setGoalsWithSubGoals] = useState<IndividualGoalWithSubGoals[]>([]);
 
   const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Usuario';
   const userEmail = currentUser?.email || '';
@@ -233,6 +102,239 @@ const Targets = () => {
     loadGoalsWithSubGoals();
   }, [currentUser, loading]);
 
+  // Función para verificar si una meta tiene sub-metas
+  const hasSubGoals = (goal: IndividualGoalWithSubGoals) => {
+    return goal.subGoals && goal.subGoals.length > 0;
+  };
+
+  // Funciones para manejo de modales - CREATE GOAL
+  const handleCreateGoal = async (goal: CreateIndividualGoal, subGoals?: CreateSubGoal[]) => {
+    if (!currentUser) return;
+
+    setCreateLoading(true);
+    try {
+      const createdGoalId = await goalService.createIndividualGoal(currentUser.uid, goal);
+      
+      if (subGoals && createdGoalId) {
+        for (const subGoal of subGoals) {
+          await subGoalService.createSubGoal(currentUser.uid, createdGoalId, subGoal);
+        }
+      }
+
+      await refreshUserData();
+      const goalsWithSubs = await goalService.getUserIndividualGoalsWithSubGoals(currentUser.uid);
+      setGoalsWithSubGoals(goalsWithSubs);
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  // EDIT GOAL
+  const handleEditGoal = async (goalId: string, goal: CreateIndividualGoal) => {
+    if (!currentUser) return;
+
+    setCreateLoading(true);
+    try {
+      await goalService.updateGoal(currentUser.uid, goalId, goal);
+      await refreshUserData();
+      
+      const goalsWithSubs = await goalService.getUserIndividualGoalsWithSubGoals(currentUser.uid);
+      setGoalsWithSubGoals(goalsWithSubs);
+      
+      setSelectedGoalForEdit(null);
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  // CREATE SUB GOAL
+  const handleCreateSubGoal = async (subGoal: CreateSubGoal) => {
+    if (!currentUser || !selectedGoalForSubGoal) return;
+
+    setCreateLoading(true);
+    try {
+      await subGoalService.createSubGoal(currentUser.uid, selectedGoalForSubGoal, subGoal);
+      await refreshUserData();
+      
+      const goalsWithSubs = await goalService.getUserIndividualGoalsWithSubGoals(currentUser.uid);
+      setGoalsWithSubGoals(goalsWithSubs);
+      
+      setSelectedGoalForSubGoal(null);
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  // EDIT SUB GOAL
+  const handleEditSubGoal = async (subGoal: CreateSubGoal) => {
+    if (!currentUser || !selectedSubGoalForEdit || !selectedGoalForSubGoal) return;
+
+    setCreateLoading(true);
+    try {
+      await subGoalService.updateSubGoal(
+        currentUser.uid, 
+        selectedGoalForSubGoal, 
+        selectedSubGoalForEdit.id, 
+        subGoal
+      );
+
+      // Recalcular el monto total de la meta principal
+      await recalculateGoalTotal(selectedGoalForSubGoal);
+      
+      const goalsWithSubs = await goalService.getUserIndividualGoalsWithSubGoals(currentUser.uid);
+      setGoalsWithSubGoals(goalsWithSubs);
+      
+      setSelectedSubGoalForEdit(null);
+      setSelectedGoalForSubGoal(null);
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  // ADD SAVING TO GOAL
+  const handleAddSaving = async (amount: number) => {
+    if (!currentUser || !selectedGoalForSaving) return;
+    
+    try {
+      await addSavingToGoal(selectedGoalForSaving, amount);
+      await refreshUserData();
+      
+      const goalsWithSubs = await goalService.getUserIndividualGoalsWithSubGoals(currentUser.uid);
+      setGoalsWithSubGoals(goalsWithSubs);
+      
+      setSelectedGoalForSaving(null);
+    } catch (error) {
+      console.error('Error agregando ahorro:', error);
+      throw error;
+    }
+  };
+
+  // ADD SAVING TO SUB GOAL
+  const handleAddSavingToSubGoal = async (amount: number) => {
+    if (!currentUser || !selectedSubGoalForSaving) return;
+    
+    try {
+      await subGoalService.addSavingToSubGoal(
+        currentUser.uid, 
+        selectedSubGoalForSaving.goalId, 
+        selectedSubGoalForSaving.subGoalId, 
+        amount
+      );
+      
+      const goalsWithSubs = await goalService.getUserIndividualGoalsWithSubGoals(currentUser.uid);
+      setGoalsWithSubGoals(goalsWithSubs);
+      
+      setSelectedSubGoalForSaving(null);
+    } catch (error) {
+      console.error('Error agregando ahorro a sub-meta:', error);
+      throw error;
+    }
+  };
+
+  // Función para recalcular el total de la meta basado en sub-metas
+  const recalculateGoalTotal = async (goalId: string) => {
+    if (!currentUser) return;
+    
+    const subGoals = await subGoalService.getSubGoals(currentUser.uid, goalId);
+    const newTotal = subGoals.reduce((total, subGoal) => total + subGoal.amount, 0);
+    
+    await goalService.updateGoal(currentUser.uid, goalId, {
+      targetAmount: newTotal
+    });
+  };
+
+  // Funciones de utilidad para montos máximos
+  const getMaxAllowedAmountForGoal = (goalId: string): number => {
+    const goal = goalsWithSubGoals.find(g => g.id === goalId);
+    if (goal) {
+      return goal.targetAmount - goal.savedAmount;
+    }
+    return 0;
+  };
+
+  const getMaxAllowedAmount = (goalId: string, subGoalId: string): number => {
+    const goal = goalsWithSubGoals.find(g => g.id === goalId);
+    const subGoal = goal?.subGoals?.find(sg => sg.id === subGoalId);
+    
+    if (subGoal) {
+      return subGoal.amount - subGoal.savedAmount;
+    }
+    return 0;
+  };
+
+  // Funciones de eliminación
+  const handleDeleteGoal = async (goalId: string) => {
+    if (!currentUser || !window.confirm('¿Estás seguro de que quieres eliminar esta meta?')) return;
+    
+    try {
+      await goalService.deleteGoal(currentUser.uid, goalId);
+      await refreshUserData();
+      
+      const goalsWithSubs = await goalService.getUserIndividualGoalsWithSubGoals(currentUser.uid);
+      setGoalsWithSubGoals(goalsWithSubs);
+    } catch (error) {
+      console.error('Error eliminando meta:', error);
+      alert('Error al eliminar la meta. Intenta de nuevo.');
+    }
+  };
+
+  const handleDeleteSubGoal = async (goalId: string, subGoalId: string) => {
+    if (!currentUser || !window.confirm('¿Estás seguro de que quieres eliminar esta sub-meta?')) return;
+    
+    try {
+      await subGoalService.deleteSubGoal(currentUser.uid, goalId, subGoalId);
+      
+      const goalsWithSubs = await goalService.getUserIndividualGoalsWithSubGoals(currentUser.uid);
+      setGoalsWithSubGoals(goalsWithSubs);
+    } catch (error) {
+      console.error('Error eliminando sub-meta:', error);
+      alert('Error al eliminar la sub-meta. Intenta de nuevo.');
+    }
+  };
+
+  // Funciones para abrir modales
+  const openEditModal = (goal: IndividualGoalWithSubGoals) => {
+    setSelectedGoalForEdit(goal);
+    setShowEditModal(true);
+  };
+
+  const openEditSubGoalModal = (goalId: string, subGoal: SubGoal) => {
+    setSelectedGoalForSubGoal(goalId);
+    setSelectedSubGoalForEdit(subGoal);
+    setShowEditSubGoalModal(true);
+  };
+
+  // Funciones de navegación y UI
+  const toggleGoalExpansion = (goalId: string) => {
+    const newExpanded = new Set(expandedGoals);
+    if (newExpanded.has(goalId)) {
+      newExpanded.delete(goalId);
+    } else {
+      newExpanded.add(goalId);
+    }
+    setExpandedGoals(newExpanded);
+  };
+
+  const navigateSubGoal = (goalId: string, direction: 'prev' | 'next', totalSubGoals: number) => {
+    const currentIndex = currentSubGoalIndex[goalId] || 0;
+    let newIndex = currentIndex;
+    
+    if (direction === 'prev') {
+      newIndex = currentIndex > 0 ? currentIndex - 1 : totalSubGoals - 1;
+    } else {
+      newIndex = currentIndex < totalSubGoals - 1 ? currentIndex + 1 : 0;
+    }
+    
+    setCurrentSubGoalIndex({
+      ...currentSubGoalIndex,
+      [goalId]: newIndex
+    });
+  };
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const closeSidebar = () => setIsSidebarOpen(false);
+
+  // Funciones para avatar de usuario
   const getUserAvatarUrl = (photoURL: string | null | undefined) => {
     if (!photoURL) return null;
     
@@ -300,289 +402,7 @@ const Targets = () => {
     );
   };
 
-  
-
-  const addTempSubGoal = () => {
-    if (!newSubGoal.title.trim() || newSubGoal.amount <= 0) {
-      alert('Por favor completa todos los campos de la sub-meta');
-      return;
-    }
-
-    setTempSubGoals([...tempSubGoals, { ...newSubGoal }]);
-    setNewSubGoal({ title: '', amount: 0 });
-  };
-
-  const removeTempSubGoal = (index: number) => {
-    setTempSubGoals(tempSubGoals.filter((_, i) => i !== index));
-  };
-
-  const calculateTotalFromSubGoals = () => {
-    return tempSubGoals.reduce((total, subGoal) => total + subGoal.amount, 0);
-  };
-
-  const handleCreateGoal = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentUser || createLoading) return;
-
-    if (!newGoal.title.trim()) {
-      alert('Por favor ingresa un título para la meta');
-      return;
-    }
-
-    if (goalType === 'simple' && newGoal.targetAmount <= 0) {
-      alert('Por favor ingresa una cantidad objetivo válida');
-      return;
-    }
-
-    if (goalType === 'detailed' && tempSubGoals.length === 0) {
-      alert('Por favor agrega al menos una sub-meta');
-      return;
-    }
-
-    setCreateLoading(true);
-    try {
-      const goalToCreate = { ...newGoal };
-      
-      if (goalType === 'detailed') {
-        goalToCreate.targetAmount = calculateTotalFromSubGoals();
-      }
-
-      const createdGoalId = await goalService.createIndividualGoal(currentUser.uid, goalToCreate);
-      
-      if (goalType === 'detailed' && createdGoalId) {
-        // Crear las sub-metas
-        for (const subGoal of tempSubGoals) {
-          await subGoalService.createSubGoal(currentUser.uid, createdGoalId, subGoal);
-        }
-      }
-
-      setShowCreateModal(false);
-      setNewGoal({ title: '', description: '', targetAmount: 0 });
-      setTempSubGoals([]);
-      setGoalType('simple');
-      await refreshUserData();
-    } catch (error) {
-      console.error('Error creando meta:', error);
-      alert('Error al crear la meta. Intenta de nuevo.');
-    } finally {
-      setCreateLoading(false);
-    }
-  };
-
-  const handleEditGoal = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentUser || !selectedGoalForEdit || createLoading) return;
-
-    if (!editGoal.title.trim()) {
-      alert('Por favor ingresa un título para la meta');
-      return;
-    }
-
-    if (editGoal.targetAmount <= 0) {
-      alert('Por favor ingresa una cantidad objetivo válida');
-      return;
-    }
-
-    setCreateLoading(true);
-    try {
-      await goalService.updateGoal(currentUser.uid, selectedGoalForEdit.id, editGoal);
-      
-      setShowEditModal(false);
-      setSelectedGoalForEdit(null);
-      setEditGoal({ title: '', description: '', targetAmount: 0 });
-      await refreshUserData();
-      
-      const goalsWithSubs = await goalService.getUserIndividualGoalsWithSubGoals(currentUser.uid);
-      setGoalsWithSubGoals(goalsWithSubs);
-    } catch (error) {
-      console.error('Error editando meta:', error);
-      alert('Error al editar la meta. Intenta de nuevo.');
-    } finally {
-      setCreateLoading(false);
-    }
-  };
-
-  const handleCreateSubGoal = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentUser || !selectedGoalForSubGoal || createLoading) return;
-
-    if (!newSubGoal.title.trim() || newSubGoal.amount <= 0) {
-      alert('Por favor completa todos los campos requeridos');
-      return;
-    }
-
-    setCreateLoading(true);
-    try {
-      await subGoalService.createSubGoal(currentUser.uid, selectedGoalForSubGoal, newSubGoal);
-      setShowSubGoalModal(false);
-      setNewSubGoal({ title: '', amount: 0 });
-      setSelectedGoalForSubGoal(null);
-      await refreshUserData();
-      
-      const goalsWithSubs = await goalService.getUserIndividualGoalsWithSubGoals(currentUser.uid);
-      setGoalsWithSubGoals(goalsWithSubs);
-    } catch (error) {
-      console.error('Error creando sub-meta:', error);
-      alert('Error al crear la sub-meta. Intenta de nuevo.');
-    } finally {
-      setCreateLoading(false);
-    }
-  };
-
-  const handleAddSaving = async (goalId: string, amount?: number) => {
-    if (!currentUser) return;
-    
-    const finalAmount = amount || parseFloat(customAmount);
-    if (isNaN(finalAmount) || finalAmount <= 0) {
-      alert('Por favor ingresa una cantidad válida');
-      return;
-    }
-  
-  // Validar que no exceda el monto máximo de la meta
-  const goal = goalsWithSubGoals.find(g => g.id === goalId);
-    if (goal) {
-      const maxAllowed = goal.targetAmount - goal.savedAmount;
-      if (finalAmount > maxAllowed) {
-        alert(`No puedes agregar más de $${maxAllowed.toLocaleString()}. Esta meta solo necesita $${maxAllowed.toLocaleString()} más para completarse.`);
-        return;
-      }
-    }
-    
-    try {
-      await addSavingToGoal(goalId, finalAmount);
-      await refreshUserData();
-      
-      const goalsWithSubs = await goalService.getUserIndividualGoalsWithSubGoals(currentUser.uid);
-      setGoalsWithSubGoals(goalsWithSubs);
-      
-      setShowAddSavingModal(false);
-      setCustomAmount('');
-      setSelectedGoalForSaving(null);
-    } catch (error) {
-      console.error('Error agregando ahorro:', error);
-      alert('Error al agregar ahorro. Intenta de nuevo.');
-    }
-  };
-
-  const handleAddSavingToSubGoal = async (goalId: string, subGoalId: string, amount?: number) => {
-    if (!currentUser || !selectedSubGoalForSaving) return;
-    
-    const finalAmount = amount || parseFloat(customSubAmount);
-    if (isNaN(finalAmount) || finalAmount <= 0) {
-      alert('Por favor ingresa una cantidad válida');
-      return;
-    }
-
-    // Validar que no exceda el monto de la sub-meta
-    const goal = goalsWithSubGoals.find(g => g.id === goalId);
-    const subGoal = goal?.subGoals?.find(sg => sg.id === subGoalId);
-    
-    if (subGoal) {
-      const maxAllowed = subGoal.amount - subGoal.savedAmount;
-      if (finalAmount > maxAllowed) {
-        alert(`No puedes agregar más de $${maxAllowed.toLocaleString()}. Esta sub-meta solo necesita $${maxAllowed.toLocaleString()} más para completarse.`);
-        return;
-      }
-    }
-    
-    try {
-      await subGoalService.addSavingToSubGoal(currentUser.uid, goalId, subGoalId, finalAmount);
-      
-      const goalsWithSubs = await goalService.getUserIndividualGoalsWithSubGoals(currentUser.uid);
-      setGoalsWithSubGoals(goalsWithSubs);
-      
-      setShowAddSubSavingModal(false);
-      setCustomSubAmount('');
-      setSelectedSubGoalForSaving(null);
-    } catch (error) {
-      console.error('Error agregando ahorro a sub-meta:', error);
-      alert('Error al agregar ahorro a la sub-meta. Intenta de nuevo.');
-    }
-  };
-
-  const handleDeleteGoal = async (goalId: string) => {
-    if (!currentUser || !window.confirm('¿Estás seguro de que quieres eliminar esta meta?')) return;
-    
-    try {
-      await goalService.deleteGoal(currentUser.uid, goalId);
-      await refreshUserData();
-      
-      const goalsWithSubs = await goalService.getUserIndividualGoalsWithSubGoals(currentUser.uid);
-      setGoalsWithSubGoals(goalsWithSubs);
-    } catch (error) {
-      console.error('Error eliminando meta:', error);
-      alert('Error al eliminar la meta. Intenta de nuevo.');
-    }
-  };
-
-  const handleDeleteSubGoal = async (goalId: string, subGoalId: string) => {
-    if (!currentUser || !window.confirm('¿Estás seguro de que quieres eliminar esta sub-meta?')) return;
-    
-    try {
-      await subGoalService.deleteSubGoal(currentUser.uid, goalId, subGoalId);
-      
-      const goalsWithSubs = await goalService.getUserIndividualGoalsWithSubGoals(currentUser.uid);
-      setGoalsWithSubGoals(goalsWithSubs);
-    } catch (error) {
-      console.error('Error eliminando sub-meta:', error);
-      alert('Error al eliminar la sub-meta. Intenta de nuevo.');
-    }
-  };
-
-  // 3. Función modificada para abrir el modal de edición
-  const openEditModal = (goal: IndividualGoalWithSubGoals) => {
-    setSelectedGoalForEdit(goal);
-    setEditGoal({
-      title: goal.title,
-      description: goal.description || '',
-      // Solo permitir editar monto si NO tiene sub-metas
-      targetAmount: hasSubGoals(goal) ? goal.targetAmount : goal.targetAmount
-    });
-    setShowEditModal(true);
-  };
-
-
-  const toggleGoalExpansion = (goalId: string) => {
-    const newExpanded = new Set(expandedGoals);
-    if (newExpanded.has(goalId)) {
-      newExpanded.delete(goalId);
-    } else {
-      newExpanded.add(goalId);
-    }
-    setExpandedGoals(newExpanded);
-  };
-
-  const navigateSubGoal = (goalId: string, direction: 'prev' | 'next', totalSubGoals: number) => {
-    const currentIndex = currentSubGoalIndex[goalId] || 0;
-    let newIndex = currentIndex;
-    
-    if (direction === 'prev') {
-      newIndex = currentIndex > 0 ? currentIndex - 1 : totalSubGoals - 1;
-    } else {
-      newIndex = currentIndex < totalSubGoals - 1 ? currentIndex + 1 : 0;
-    }
-    
-    setCurrentSubGoalIndex({
-      ...currentSubGoalIndex,
-      [goalId]: newIndex
-    });
-  };
-
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-  const closeSidebar = () => setIsSidebarOpen(false);
-
-  // Función para obtener monto máximo permitido en sub-meta
-  const getMaxAllowedAmount = (goalId: string, subGoalId: string): number => {
-    const goal = goalsWithSubGoals.find(g => g.id === goalId);
-    const subGoal = goal?.subGoals?.find(sg => sg.id === subGoalId);
-    
-    if (subGoal) {
-      return subGoal.amount - subGoal.savedAmount;
-    }
-    
-    return 0;
-  };
-
+  // Filtros y ordenamiento
   const filteredAndSortedGoals = goalsWithSubGoals
     .filter(goal => {
       const matchesSearch = goal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -692,7 +512,6 @@ const Targets = () => {
               </button>
               <div className="header-info">
                 <h1 className="header-title">
-                  <Target size={28} className="title-icon" />
                   Mis Metas Individuales
                 </h1>
                 <p className="header-subtitle">
@@ -769,15 +588,15 @@ const Targets = () => {
             filteredAndSortedGoals.map((goal) => {
               const progress = Math.round((goal.savedAmount / goal.targetAmount) * 100);
               const remainingAmount = goal.targetAmount - goal.savedAmount;
-              const hasSubGoals = goal.subGoals && goal.subGoals.length > 0;
+              const hasSubGoalsFlag = hasSubGoals(goal);
               const isExpanded = expandedGoals.has(goal.id);
               const currentIndex = currentSubGoalIndex[goal.id] || 0;
-              const currentSubGoal = hasSubGoals ? goal.subGoals![currentIndex] : null;
+              const currentSubGoal = hasSubGoalsFlag ? goal.subGoals![currentIndex] : null;
               
               return (
                 <motion.div 
                   key={goal.id} 
-                  className={`goal-card ${goal.isCompleted ? 'completed' : ''} ${hasSubGoals ? 'has-subgoals' : ''}`}
+                  className={`goal-card ${goal.isCompleted ? 'completed' : ''} ${hasSubGoalsFlag ? 'has-subgoals' : ''}`}
                   variants={itemVariants}
                 >
                   <div className="goal-card-header">
@@ -787,7 +606,7 @@ const Targets = () => {
                     <div className="goal-info">
                       <div className="goal-title-row">
                         <h3 className="goal-title">{goal.title}</h3>
-                        {hasSubGoals && (
+                        {hasSubGoalsFlag && (
                           <button 
                             className="expand-button"
                             onClick={() => toggleGoalExpansion(goal.id)}
@@ -802,7 +621,7 @@ const Targets = () => {
                       )}
                     </div>
                     <div className="goal-actions">
-                      {!hasSubGoals && (
+                      {!hasSubGoalsFlag && (
                         <button 
                           className="btn-add-subgoal" 
                           title="Añadir sub-meta"
@@ -852,51 +671,82 @@ const Targets = () => {
                     </div>
                   </div>
 
-                  {/* Sub-metas navegables */}
-                  {hasSubGoals && isExpanded && goal.subGoals && goal.subGoals.length > 0 && (
+                  {/* Sub-metas navegables - versión con animación rápida y fluida */}
+                  {hasSubGoalsFlag && isExpanded && goal.subGoals && goal.subGoals.length > 0 && (
+                  <motion.div 
+                    className="subgoals-container"
+                    initial={{ 
+                      height: 0, 
+                      opacity: 0,
+                      y: -5,
+                      scaleY: 0.95 // Añadimos una ligera escala para el efecto de despliegue
+                    }}
+                    animate={{ 
+                      height: 'auto', 
+                      opacity: 1,
+                      y: 0,
+                      scaleY: 1
+                    }}
+                    exit={{ 
+                      height: 0, 
+                      opacity: 0,
+                      y: -5,
+                      scaleY: 0.95
+                    }}
+                    transition={{ 
+                      duration: 0.35, // Aumentamos la duración para más suavidad
+                      ease: [0.25, 0.46, 0.45, 0.94], // easeOutQuad
+                      height: { duration: 0.35 },
+                      opacity: { duration: 0.3, delay: 0.05 },
+                      scaleY: { duration: 0.35 }
+                    }}
+                  >
                     <motion.div 
-                      className="subgoals-container"
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
+                      className="subgoals-header"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.15, duration: 0.2 }} // Ajustamos el delay para que aparezca después de la expansión
                     >
-                      <div className="subgoals-header">
-                        <Package size={16} />
-                        <span>Desglose de gastos</span>
-                        {goal.subGoals.length > 1 && (
-                          <div className="subgoal-navigation">
-                            <button 
-                              className="nav-btn"
-                              onClick={() => navigateSubGoal(goal.id, 'prev', goal.subGoals!.length)}
-                            >
-                              <ChevronLeft size={16} />
-                            </button>
-                            <span className="subgoal-counter">
-                              {currentIndex + 1} de {goal.subGoals.length}
-                            </span>
-                            <button
+                      <Package size={16} />
+                      <span>Desglose de gastos</span>
+                      {goal.subGoals.length > 1 && (
+                        <div className="subgoal-navigation">
+                          <button 
                             className="nav-btn"
-                              onClick={() => navigateSubGoal(goal.id, 'next', goal.subGoals!.length)}
-                            >
-                              <ChevronRight size={16} />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {currentSubGoal && (
-                        <div className="subgoals-list">
-                          <div className={`subgoal-item ${currentSubGoal.completed ? 'completed' : ''}`}>
-                            <div className="subgoal-header">
-                              <div className="subgoal-info">
-                                <h4 className="subgoal-title">{currentSubGoal.title}</h4>
-                                <div className="subgoal-amounts">
-                                  <span className="saved">${currentSubGoal.savedAmount.toLocaleString()}</span>
-                                  <span className="target">de ${currentSubGoal.amount.toLocaleString()}</span>
-                                </div>
+                            onClick={() => navigateSubGoal(goal.id, 'prev', goal.subGoals!.length)}
+                          >
+                            <ChevronLeft size={16} />
+                          </button>
+                          <span className="subgoal-counter">
+                            {currentIndex + 1} de {goal.subGoals.length}
+                          </span>
+                          <button
+                            className="nav-btn"
+                            onClick={() => navigateSubGoal(goal.id, 'next', goal.subGoals!.length)}
+                          >
+                            <ChevronRight size={16} />
+                          </button>
+                        </div>
+                      )}
+                    </motion.div>
+                    
+                    {currentSubGoal && (
+                      <motion.div 
+                        className="subgoals-list"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2, duration: 0.2 }} // Ajustamos el delay
+                      >
+                        <div className={`subgoal-item ${currentSubGoal.completed ? 'completed' : ''}`}>
+                          <div className="subgoal-header">
+                            <div className="subgoal-info">
+                              <h4 className="subgoal-title">{currentSubGoal.title}</h4>
+                              <div className="subgoal-amounts">
+                                <span className="saved">${currentSubGoal.savedAmount.toLocaleString()}</span>
+                                <span className="target">de ${currentSubGoal.amount.toLocaleString()}</span>
                               </div>
-                              <div className="subgoal-actions">
+                            </div>
+                            <div className="subgoal-actions">
                               {!currentSubGoal.completed && (
                                 <>
                                   <button 
@@ -926,23 +776,25 @@ const Targets = () => {
                                 <Trash2 size={14} />
                               </button>
                             </div>
+                          </div>
+                          <div className="subgoal-progress">
+                            <div className="subprogress-bar-container">
+                              <motion.div 
+                                className="subprogress-bar-fill" 
+                                initial={{ width: 0 }}
+                                animate={{ width: `${Math.min(Math.round((currentSubGoal.savedAmount / currentSubGoal.amount) * 100), 100)}%` }}
+                                transition={{ delay: 0.25, duration: 0.4, ease: "easeOut" }}
+                              />
                             </div>
-                            <div className="subgoal-progress">
-                              <div className="subprogress-bar-container">
-                                <div 
-                                  className="subprogress-bar-fill" 
-                                  style={{ width: `${Math.min(Math.round((currentSubGoal.savedAmount / currentSubGoal.amount) * 100), 100)}%` }}
-                                ></div>
-                              </div>
-                              <span className="subprogress-text">
-                                {Math.round((currentSubGoal.savedAmount / currentSubGoal.amount) * 100)}%
-                              </span>
-                            </div>
+                            <span className="subprogress-text">
+                              {Math.round((currentSubGoal.savedAmount / currentSubGoal.amount) * 100)}%
+                            </span>
                           </div>
                         </div>
-                      )}
-                    </motion.div>
-                  )}
+                      </motion.div>
+                    )}
+                  </motion.div>
+                )}
 
                   <div className="goal-footer">
                     <div className="goal-date">
@@ -955,7 +807,7 @@ const Targets = () => {
                         })}
                       </span>
                     </div>
-                    {!goal.isCompleted && !hasSubGoals && (
+                    {!goal.isCompleted && !hasSubGoalsFlag && (
                       <button 
                         className="btn-add-saving"
                         onClick={() => {
@@ -975,626 +827,57 @@ const Targets = () => {
         </motion.div>
       </main>
 
-      {/* Modal para crear meta */}
-      {showCreateModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
-          <motion.div 
-            className="modal-content"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-header">
-              <h2>Crear Nueva Meta</h2>
-              <button 
-                className="modal-close"
-                onClick={() => setShowCreateModal(false)}
-              >
-                <X size={24} />
-              </button>
-            </div>
-            
-            <form onSubmit={handleCreateGoal} className="modal-form">
-              <div className="form-group">
-                <label>Tipo de meta</label>
-                <div className="goal-type-selector">
-                  <button
-                    type="button"
-                    className={`type-option ${goalType === 'simple' ? 'active' : ''}`}
-                    onClick={() => setGoalType('simple')}
-                  >
-                    <Target size={20} />
-                    <div>
-                      <span className="type-title">Meta Simple</span>
-                      <span className="type-desc">Un objetivo con cantidad fija (ej: comprar una PS5)</span>
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    className={`type-option ${goalType === 'detailed' ? 'active' : ''}`}
-                    onClick={() => setGoalType('detailed')}
-                  >
-                    <Package size={20} />
-                    <div>
-                      <span className="type-title">Meta Detallada</span>
-                      <span className="type-desc">Objetivo con múltiples gastos (ej: viaje con hotel, comida, etc.)</span>
-                    </div>
-                  </button>
-                </div>
-              </div>
+      {/* MODALES */}
+      <CreateGoalModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreateGoal={handleCreateGoal}
+        loading={createLoading}
+      />
 
-              <div className="form-group">
-                <label htmlFor="title">Título de la meta *</label>
-                <input
-                  type="text"
-                  id="title"
-                  value={newGoal.title}
-                  onChange={(e) => setNewGoal({...newGoal, title: e.target.value})}
-                  placeholder={goalType === 'simple' ? 'Ej: Comprar iPhone 16' : 'Ej: Viaje a Japón'}
-                  required
-                />
-              </div>
-              
-              {goalType === 'simple' && (
-                <div className="form-group">
-                  <label htmlFor="targetAmount">Cantidad objetivo *</label>
-                  <div className="amount-input">
-                    <span className="currency">$</span>
-                    <input
-                      type="text"
-                      id="targetAmount"
-                      value={newGoal.targetAmount || ''}
-                      onChange={(e) => {
-                        const numericValue = e.target.value.replace(/[^0-9.]/g, '');
-                        const parts = numericValue.split('.');
-                        if (parts.length <= 2 && (!parts[1] || parts[1].length <= 2)) {
-                          setNewGoal({...newGoal, targetAmount: parseFloat(numericValue) || 0});
-                        }
-                      }}
-                      placeholder="0"
-                      required
-                    />
-                  </div>
-                </div>
-              )}
+      <EditGoalModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onEditGoal={handleEditGoal}
+        goal={selectedGoalForEdit}
+        loading={createLoading}
+      />
 
-              {goalType === 'detailed' && (
-                <div className="form-group">
-                  <label>Sub-metas (gastos estimados)</label>
-                  
-                  <div className="subgoal-form">
-                    <div className="subgoal-input-row">
-                      <input
-                        type="text"
-                        value={newSubGoal.title}
-                        onChange={(e) => setNewSubGoal({...newSubGoal, title: e.target.value})}
-                        placeholder="Ej: Hotel"
-                      />
-                      <div className="amount-input">
-                        <span className="currency">$</span>
-                        <input
-                          type="text"
-                          value={newSubGoal.amount || ''}
-                          onChange={(e) => {
-                            const numericValue = e.target.value.replace(/[^0-9.]/g, '');
-                            const parts = numericValue.split('.');
-                            if (parts.length <= 2 && (!parts[1] || parts[1].length <= 2)) {
-                              setNewSubGoal({...newSubGoal, amount: parseFloat(numericValue) || 0});
-                            }
-                          }}
-                          placeholder="0"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        className="btn-add-temp"
-                        onClick={addTempSubGoal}
-                      >
-                        <Plus size={16} />
-                      </button>
-                    </div>
-                  </div>
+      <CreateSubGoalModal
+        isOpen={showSubGoalModal}
+        onClose={() => setShowSubGoalModal(false)}
+        onCreateSubGoal={handleCreateSubGoal}
+        goalTitle={goalsWithSubGoals.find(g => g.id === selectedGoalForSubGoal)?.title}
+        loading={createLoading}
+      />
 
-                  {tempSubGoals.length > 0 && (
-                    <div className="temp-subgoals-list">
-                      <h4>Sub-metas agregadas:</h4>
-                      {tempSubGoals.map((subGoal, index) => (
-                        <div key={index} className="temp-subgoal-item">
-                          <span className="temp-subgoal-title">{subGoal.title}</span>
-                          <span className="temp-subgoal-amount">${subGoal.amount.toLocaleString()}</span>
-                          <button
-                            type="button"
-                            className="btn-remove-temp"
-                            onClick={() => removeTempSubGoal(index)}
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ))}
-                      <div className="temp-total">
-                        <strong>Total: ${calculateTotalFromSubGoals().toLocaleString()}</strong>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              <div className="form-actions">
-                <button 
-                  type="button" 
-                  className="btn-secondary"
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setTempSubGoals([]);
-                    setGoalType('simple');
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit" 
-                  className="btn-primary"
-                  disabled={createLoading || (goalType === 'detailed' && tempSubGoals.length === 0)}
-                >
-                  {createLoading ? (
-                    <>
-                      <Loader size={16} className="animate-spin" />
-                      Creando...
-                    </>
-                  ) : (
-                    <>
-                      <PlusCircle size={16} />
-                      Crear Meta
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
+      <EditSubGoalModal
+        isOpen={showEditSubGoalModal}
+        onClose={() => setShowEditSubGoalModal(false)}
+        onEditSubGoal={handleEditSubGoal}
+        subGoal={selectedSubGoalForEdit}
+        goalTitle={goalsWithSubGoals.find(g => g.id === selectedGoalForSubGoal)?.title}
+        loading={createLoading}
+      />
 
-      {/* Modal para editar meta */}
-      {showEditModal && selectedGoalForEdit && (
-  <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
-    <motion.div 
-      className="modal-content"
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="modal-header">
-        <h2>Editar Meta</h2>
-        <button 
-          className="modal-close"
-          onClick={() => setShowEditModal(false)}
-        >
-          <X size={24} />
-        </button>
-      </div>
-      
-      <form onSubmit={handleEditGoal} className="modal-form">
-        <div className="form-group">
-          <label htmlFor="editTitle">Título de la meta *</label>
-          <input
-            type="text"
-            id="editTitle"
-            value={editGoal.title}
-            onChange={(e) => setEditGoal({...editGoal, title: e.target.value})}
-            placeholder="Ej: Comprar iPhone 16"
-            required
-          />
-        </div>
-        
-        {/* Solo mostrar campo de monto si NO tiene sub-metas */}
-        {!hasSubGoals(selectedGoalForEdit) && (
-          <div className="form-group">
-            <label htmlFor="editTargetAmount">Cantidad objetivo *</label>
-            <div className="amount-input">
-              <span className="currency">$</span>
-              <input
-                type="text"
-                id="editTargetAmount"
-                value={editGoal.targetAmount || ''}
-                onChange={(e) => {
-                  const numericValue = e.target.value.replace(/[^0-9.]/g, '');
-                  const parts = numericValue.split('.');
-                  if (parts.length <= 2 && (!parts[1] || parts[1].length <= 2)) {
-                    setEditGoal({...editGoal, targetAmount: parseFloat(numericValue) || 0});
-                  }
-                }}
-                placeholder="0"
-                required
-              />
-            </div>
-          </div>
-        )}
-        
-        <div className="form-actions">
-          <button 
-            type="button" 
-            className="btn-secondary"
-            onClick={() => setShowEditModal(false)}
-          >
-            Cancelar
-          </button>
-          <button 
-            type="submit" 
-            className="btn-primary"
-            disabled={createLoading}
-          >
-            {createLoading ? (
-              <>
-                <Loader size={16} className="animate-spin" />
-                Guardando...
-              </>
-            ) : (
-              <>
-                <Save size={16} />
-                Guardar Cambios
-              </>
-            )}
-          </button>
-        </div>
-      </form>
-    </motion.div>
-  </div>
-)}
+      <AddSavingModal
+        isOpen={showAddSavingModal}
+        onClose={() => setShowAddSavingModal(false)}
+        onAddSaving={handleAddSaving}
+        goalTitle={goalsWithSubGoals.find(g => g.id === selectedGoalForSaving)?.title}
+        maxAmount={selectedGoalForSaving ? getMaxAllowedAmountForGoal(selectedGoalForSaving) : 0}
+        loading={false}
+      />
 
-{showEditSubGoalModal && selectedSubGoalForEdit && (
-  <div className="modal-overlay" onClick={() => setShowEditSubGoalModal(false)}>
-    <motion.div 
-      className="modal-content"
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="modal-header">
-        <h2>Editar Sub-Meta</h2>
-        <button 
-          className="modal-close"
-          onClick={() => setShowEditSubGoalModal(false)}
-        >
-          <X size={24} />
-        </button>
-      </div>
-      
-      <form onSubmit={handleEditSubGoal} className="modal-form">
-        <div className="form-group">
-          <label htmlFor="editSubGoalTitle">Nombre del gasto *</label>
-          <input
-            type="text"
-            id="editSubGoalTitle"
-            value={editSubGoal.title}
-            onChange={(e) => setEditSubGoal({...editSubGoal, title: e.target.value})}
-            placeholder="Ej: Costo del hotel, Comida, Vuelos"
-            required
-          />
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="editSubGoalAmount">Cantidad estimada *</label>
-          <div className="amount-input">
-            <span className="currency">$</span>
-            <input
-              type="text"
-              id="editSubGoalAmount"
-              value={editSubGoal.amount || ''}
-              onChange={(e) => {
-                const numericValue = e.target.value.replace(/[^0-9.]/g, '');
-                const parts = numericValue.split('.');
-                if (parts.length <= 2 && (!parts[1] || parts[1].length <= 2)) {
-                  setEditSubGoal({...editSubGoal, amount: parseFloat(numericValue) || 0});
-                }
-              }}
-              placeholder="0"
-              required
-            />
-          </div>
-        </div>
-        
-        <div className="form-actions">
-          <button 
-            type="button" 
-            className="btn-secondary"
-            onClick={() => setShowEditSubGoalModal(false)}
-          >
-            Cancelar
-          </button>
-          <button 
-            type="submit" 
-            className="btn-primary"
-            disabled={createLoading}
-          >
-            {createLoading ? (
-              <>
-                <Loader size={16} className="animate-spin" />
-                Guardando...
-              </>
-            ) : (
-              <>
-                <Save size={16} />
-                Guardar Cambios
-              </>
-            )}
-          </button>
-        </div>
-      </form>
-    </motion.div>
-  </div>
-)}
-
-      {/* Modal para crear sub-meta */}
-      {showSubGoalModal && (
-        <div className="modal-overlay" onClick={() => setShowSubGoalModal(false)}>
-          <motion.div 
-            className="modal-content"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-header">
-              <h2>Añadir Sub-Meta</h2>
-              <button 
-                className="modal-close"
-                onClick={() => setShowSubGoalModal(false)}
-              >
-                <X size={24} />
-              </button>
-            </div>
-            
-            <form onSubmit={handleCreateSubGoal} className="modal-form">
-              <div className="form-group">
-                <label htmlFor="subGoalTitle">Nombre del gasto *</label>
-                <input
-                  type="text"
-                  id="subGoalTitle"
-                  value={newSubGoal.title}
-                  onChange={(e) => setNewSubGoal({...newSubGoal, title: e.target.value})}
-                  placeholder="Ej: Costo del hotel, Comida, Vuelos"
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="subGoalAmount">Cantidad estimada *</label>
-                <div className="amount-input">
-                  <span className="currency">$</span>
-                  <input
-                    type="text"
-                    id="subGoalAmount"
-                    value={newSubGoal.amount || ''}
-                    onChange={(e) => {
-                      const numericValue = e.target.value.replace(/[^0-9.]/g, '');
-                      const parts = numericValue.split('.');
-                      if (parts.length <= 2 && (!parts[1] || parts[1].length <= 2)) {
-                        setNewSubGoal({...newSubGoal, amount: parseFloat(numericValue) || 0});
-                      }
-                    }}
-                    placeholder="0"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="form-actions">
-                <button 
-                  type="button" 
-                  className="btn-secondary"
-                  onClick={() => setShowSubGoalModal(false)}
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit" 
-                  className="btn-primary"
-                  disabled={createLoading}
-                >
-                  {createLoading ? (
-                    <>
-                      <Loader size={16} className="animate-spin" />
-                      Creando...
-                    </>
-                  ) : (
-                    <>
-                      <PlusCircle size={16} />
-                      Crear Sub-Meta
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Modal para añadir ahorro a meta principal - MODIFICADO */}
-      {showAddSavingModal && selectedGoalForSaving && (
-        <div className="modal-overlay" onClick={() => setShowAddSavingModal(false)}>
-          <motion.div 
-            className="modal-content"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-header">
-              <h2>Añadir Dinero</h2>
-              <button 
-                className="modal-close"
-                onClick={() => setShowAddSavingModal(false)}
-              >
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div className="modal-form">
-              <div className="form-group">
-                <label htmlFor="customAmount">¿Cuánto quieres añadir? *</label>
-                <div className="amount-input">
-                  <span className="currency">$</span>
-                  <input
-                    type="text"
-                    id="customAmount"
-                    value={customAmount}
-                    onChange={(e) => handleNumericInputWithLimit(
-                      e.target.value, 
-                      setCustomAmount, 
-                      getMaxAllowedAmountForGoal(selectedGoalForSaving)
-                    )}
-                    placeholder="0"
-                    autoFocus
-                  />
-                </div>
-                <small className="amount-hint">
-                  Máximo permitido: ${getMaxAllowedAmountForGoal(selectedGoalForSaving).toLocaleString()}
-                </small>
-              </div>
-              
-              <div className="quick-amounts">
-                <span className="quick-label">Montos rápidos:</span>
-                <div className="quick-buttons">
-                  {/* Generar botones dinámicos basados en el máximo permitido */}
-                  {(() => {
-                    const maxAllowed = getMaxAllowedAmountForGoal(selectedGoalForSaving);
-                    const quickAmounts = [25, 50, 100, 200].filter(amount => amount <= maxAllowed);
-                    
-                    // Si no hay montos rápidos menores al máximo, mostrar el máximo
-                    if (quickAmounts.length === 0 && maxAllowed > 0) {
-                      quickAmounts.push(Math.floor(maxAllowed));
-                    }
-                    
-                    return quickAmounts.map(amount => (
-                      <button 
-                        key={amount}
-                        type="button" 
-                        className="btn-quick-amount"
-                        onClick={() => setCustomAmount(amount.toString())}
-                      >
-                        ${amount}
-                      </button>
-                    ));
-                  })()}
-                </div>
-              </div>
-              
-              <div className="form-actions">
-                <button 
-                  type="button" 
-                  className="btn-secondary"
-                  onClick={() => setShowAddSavingModal(false)}
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="button"
-                  className="btn-primary"
-                  onClick={() => selectedGoalForSaving && handleAddSaving(selectedGoalForSaving)}
-                  disabled={!customAmount || parseFloat(customAmount) <= 0}
-                >
-                  <PlusCircle size={16} />
-                  Añadir ${parseFloat(customAmount || '0').toLocaleString()}
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-
-      {/* Modal para añadir ahorro a sub-meta - MODIFICADO */}
-      {showAddSubSavingModal && selectedSubGoalForSaving && (
-        <div className="modal-overlay" onClick={() => setShowAddSubSavingModal(false)}>
-          <motion.div 
-            className="modal-content"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-header">
-              <h2>Añadir Dinero a Sub-Meta</h2>
-              <button 
-                className="modal-close"
-                onClick={() => setShowAddSubSavingModal(false)}
-              >
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div className="modal-form">
-              <div className="form-group">
-                <label htmlFor="customSubAmount">¿Cuánto quieres añadir? *</label>
-                <div className="amount-input">
-                  <span className="currency">$</span>
-                  <input
-                    type="text"
-                    id="customSubAmount"
-                    value={customSubAmount}
-                    onChange={(e) => handleNumericInputWithLimit(
-                      e.target.value, 
-                      setCustomSubAmount, 
-                      getMaxAllowedAmount(selectedSubGoalForSaving.goalId, selectedSubGoalForSaving.subGoalId)
-                    )}
-                    placeholder="0"
-                    autoFocus
-                  />
-                </div>
-                <small className="amount-hint">
-                  Máximo permitido: ${getMaxAllowedAmount(selectedSubGoalForSaving.goalId, selectedSubGoalForSaving.subGoalId).toLocaleString()}
-                </small>
-              </div>
-              
-              <div className="quick-amounts">
-                <span className="quick-label">Montos rápidos:</span>
-                <div className="quick-buttons">
-                  {/* Generar botones dinámicos basados en el máximo permitido para sub-meta */}
-                  {(() => {
-                    const maxAllowed = getMaxAllowedAmount(selectedSubGoalForSaving.goalId, selectedSubGoalForSaving.subGoalId);
-                    const quickAmounts = [15, 25, 50, 100].filter(amount => amount <= maxAllowed);
-                    
-                    // Si no hay montos rápidos menores al máximo, mostrar el máximo
-                    if (quickAmounts.length === 0 && maxAllowed > 0) {
-                      quickAmounts.push(Math.floor(maxAllowed));
-                    }
-                    
-                    return quickAmounts.map(amount => (
-                      <button 
-                        key={amount}
-                        type="button" 
-                        className="btn-quick-amount"
-                        onClick={() => setCustomSubAmount(amount.toString())}
-                      >
-                        ${amount}
-                      </button>
-                    ));
-                  })()}
-                </div>
-              </div>
-              
-              <div className="form-actions">
-                <button 
-                  type="button" 
-                  className="btn-secondary"
-                  onClick={() => setShowAddSubSavingModal(false)}
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="button"
-                  className="btn-primary"
-                  onClick={() => handleAddSavingToSubGoal(
-                    selectedSubGoalForSaving.goalId, 
-                    selectedSubGoalForSaving.subGoalId
-                  )}
-                  disabled={!customSubAmount || parseFloat(customSubAmount) <= 0}
-                >
-                  <PlusCircle size={16} />
-                  Añadir ${parseFloat(customSubAmount || '0').toLocaleString()}
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
+      <AddSubSavingModal
+        isOpen={showAddSubSavingModal}
+        onClose={() => setShowAddSubSavingModal(false)}
+        onAddSubSaving={handleAddSavingToSubGoal}
+        goalTitle={selectedSubGoalForSaving ? goalsWithSubGoals.find(g => g.id === selectedSubGoalForSaving.goalId)?.title : undefined}
+        subGoalTitle={selectedSubGoalForSaving ? goalsWithSubGoals.find(g => g.id === selectedSubGoalForSaving.goalId)?.subGoals?.find(sg => sg.id === selectedSubGoalForSaving.subGoalId)?.title : undefined}
+        maxAmount={selectedSubGoalForSaving ? getMaxAllowedAmount(selectedSubGoalForSaving.goalId, selectedSubGoalForSaving.subGoalId) : 0}
+        loading={false}
+      />
     </div>
   );
 };

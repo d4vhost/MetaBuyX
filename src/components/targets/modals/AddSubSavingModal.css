@@ -1,0 +1,351 @@
+/* src/components/targets/modals/AddSubSavingModal.css */
+
+/* Modal overlay and content */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background-color: #FFFFFF;
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.08), 0 4px 6px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Modal header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 2rem 0;
+  margin-bottom: 1.5rem;
+}
+
+.modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: #000000;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  color: #333333;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background-color: #F5F3F0;
+  color: #000000;
+}
+
+/* Modal info section - special styling for sub-goal info */
+.modal-info {
+  padding: 0 2rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.02) 100%);
+  border-radius: 0.75rem;
+  padding: 1.25rem 2rem;
+  margin: 0 2rem 1.5rem;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.modal-info p {
+  font-size: 0.875rem;
+  color: #333333;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modal-info p:last-child {
+  margin-bottom: 0;
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+.modal-info p strong {
+  color: #000000;
+  font-weight: 600;
+}
+
+/* Form styles */
+.modal-form {
+  padding: 0 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #000000;
+}
+
+/* Amount input - sub-goal specific styling */
+.amount-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.currency {
+  position: absolute;
+  left: 1rem;
+  font-size: 0.95rem;
+  color: #333333;
+  font-weight: 500;
+  z-index: 1;
+}
+
+.amount-input input {
+  width: 100%;
+  padding: 1rem 1rem 1rem 2rem;
+  border: 1px solid #E8E5E1;
+  border-radius: 0.75rem;
+  background-color: #FFFFFF;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  border-left: 3px solid #3b82f6;
+}
+
+.amount-input input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.amount-input input::placeholder {
+  color: #999999;
+}
+
+/* Amount hint - sub-goal specific styling */
+.amount-hint {
+  font-size: 0.75rem;
+  color: #3b82f6;
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* Quick amounts - adjusted for sub-goals */
+.quick-amounts {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.02) 100%);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.quick-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #000000;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quick-label::before {
+  content: '';
+  width: 3px;
+  height: 16px;
+  background: #3b82f6;
+  border-radius: 2px;
+}
+
+.quick-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-quick-amount {
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: #FFFFFF;
+  color: #3b82f6;
+  border-radius: 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 60px;
+}
+
+.btn-quick-amount:hover {
+  background: #3b82f6;
+  color: #FFFFFF;
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+/* Form actions */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.btn-secondary,
+.btn-primary {
+  padding: 1rem 1.5rem;
+  border-radius: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid;
+}
+
+.btn-secondary {
+  background-color: #FFFFFF;
+  color: #000000;
+  border-color: #E8E5E1;
+}
+
+.btn-secondary:hover {
+  background-color: #F5F3F0;
+  border-color: #D8D5D0;
+}
+
+.btn-primary {
+  background-color: #3b82f6;
+  color: #FFFFFF;
+  border-color: #3b82f6;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .modal-overlay {
+    padding: 1rem;
+  }
+  
+  .modal-content {
+    max-height: 95vh;
+  }
+  
+  .modal-header,
+  .modal-form {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .modal-header {
+    padding-bottom: 0;
+  }
+  
+  .modal-form {
+    padding-bottom: 1rem;
+  }
+  
+  .modal-info {
+    margin-left: 1rem;
+    margin-right: 1rem;
+    padding: 1rem;
+  }
+  
+  .modal-info p {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .quick-buttons {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-actions {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .btn-secondary,
+  .btn-primary {
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .modal-info p {
+    font-size: 0.8rem;
+  }
+}
+
+/* Loading state for sub-goal modal */
+.btn-primary.loading {
+  position: relative;
+  color: transparent !important;
+}
+
+.btn-primary.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid #FFFFFF;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .btn-quick-amount:hover,
+  .btn-primary:hover {
+    transform: none !important;
+  }
+  
+  .btn-primary.loading::after {
+    animation: none !important;
+  }
+}
