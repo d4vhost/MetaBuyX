@@ -187,7 +187,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
                     type="text"
                     value={newSubGoal.title}
                     onChange={(e) => setNewSubGoal({...newSubGoal, title: e.target.value})}
-                    placeholder="Ej: Hotel"
+                    placeholder="Ej: Hotel, Comida, Transporte"
                   />
                   <div className="amount-input">
                     <span className="currency">$</span>
