@@ -1,9 +1,9 @@
-// src/pages/Workspace/workspace.tsx - Versión final corregida con navegación
+// src/pages/Workspace/workspace.tsx - Versión completa con slider actualizado
 import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   LayoutDashboard, Users, CheckSquare, Settings, LogOut, PlusCircle, Search,
-  DollarSign, TrendingUp, Loader, Menu, X, Award, Bookmark, User
+  DollarSign, TrendingUp, Loader, Menu, X, Award, Bookmark, User, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useUserData } from '../../hooks/useUserData';
@@ -15,6 +15,13 @@ import './workspace.css';
 interface GoalCardProps {
   goal: IndividualGoal | TeamGoal;
   isTeam?: boolean;
+}
+
+interface SliderProps {
+  children: React.ReactNode;
+  title: string;
+  viewAllLink: string;
+  emptyMessage: string;
 }
 
 const listVariants = {
@@ -130,6 +137,141 @@ const Workspace = () => {
     );
   };
 
+  // Componente Slider actualizado con navegación superpuesta
+  const GoalsSlider: React.FC<SliderProps> = ({ children, title, viewAllLink, emptyMessage }) => {
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
+    const sliderRef = useRef<HTMLDivElement>(null);
+    const childrenArray = Array.isArray(children) ? children : [children].filter(Boolean);
+    const totalSlides = childrenArray.length;
+
+    useEffect(() => {
+      const updateScrollButtons = () => {
+        setCanScrollLeft(currentIndex > 0);
+        setCanScrollRight(currentIndex < totalSlides - 1);
+      };
+
+      updateScrollButtons();
+    }, [currentIndex, totalSlides]);
+
+    const scrollTo = (direction: 'left' | 'right') => {
+      if (sliderRef.current) {
+        const newIndex = direction === 'left' 
+          ? Math.max(0, currentIndex - 1)
+          : Math.min(totalSlides - 1, currentIndex + 1);
+        
+        setCurrentIndex(newIndex);
+        
+        const containerWidth = sliderRef.current.clientWidth;
+        const newScrollLeft = newIndex * containerWidth;
+
+        sliderRef.current.scrollTo({
+          left: newScrollLeft,
+          behavior: 'smooth'
+        });
+      }
+    };
+
+    // Detectar cambios en el scroll manual
+    const handleScroll = () => {
+      if (sliderRef.current) {
+        const containerWidth = sliderRef.current.clientWidth;
+        const scrollLeft = sliderRef.current.scrollLeft;
+        const newIndex = Math.round(scrollLeft / containerWidth);
+        if (newIndex !== currentIndex) {
+          setCurrentIndex(newIndex);
+        }
+      }
+    };
+
+    useEffect(() => {
+      const slider = sliderRef.current;
+      if (slider) {
+        slider.addEventListener('scroll', handleScroll);
+        return () => slider.removeEventListener('scroll', handleScroll);
+      }
+    }, [currentIndex]);
+
+    if (childrenArray.length === 0) {
+      return (
+        <div className="goals-slider-section">
+          <div className="section-header">
+            <h2>{title}</h2>
+            <Link to={viewAllLink} className="section-link">Ver todas</Link>
+          </div>
+          <div className="empty-state">{emptyMessage}</div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="goals-slider-section">
+        <div className="section-header">
+          <h2>{title}</h2>
+          <Link to={viewAllLink} className="section-link">Ver todas</Link>
+        </div>
+        <div className="goals-slider-container-with-nav">
+          {/* Flecha izquierda */}
+          {totalSlides > 1 && (
+            <button 
+              className={`slider-nav-btn slider-nav-left ${!canScrollLeft ? 'disabled' : ''}`}
+              onClick={() => scrollTo('left')}
+              disabled={!canScrollLeft}
+              aria-label="Deslizar hacia la izquierda"
+            >
+              <ChevronLeft size={20} />
+            </button>
+          )}
+
+          {/* Slider */}
+          <div className="goals-slider" ref={sliderRef}>
+            {childrenArray.map((child, index) => (
+              <div key={index} className="slider-card">
+                {child}
+              </div>
+            ))}
+          </div>
+
+          {/* Flecha derecha */}
+          {totalSlides > 1 && (
+            <button 
+              className={`slider-nav-btn slider-nav-right ${!canScrollRight ? 'disabled' : ''}`}
+              onClick={() => scrollTo('right')}
+              disabled={!canScrollRight}
+              aria-label="Deslizar hacia la derecha"
+            >
+              <ChevronRight size={20} />
+            </button>
+          )}
+
+          {/* Indicadores de posición */}
+          {totalSlides > 1 && (
+            <div className="slider-indicators">
+              {Array.from({ length: totalSlides }).map((_, index) => (
+                <button
+                  key={index}
+                  className={`slider-indicator ${index === currentIndex ? 'active' : ''}`}
+                  onClick={() => {
+                    setCurrentIndex(index);
+                    if (sliderRef.current) {
+                      const containerWidth = sliderRef.current.clientWidth;
+                      sliderRef.current.scrollTo({
+                        left: index * containerWidth,
+                        behavior: 'smooth'
+                      });
+                    }
+                  }}
+                  aria-label={`Ir a la diapositiva ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const summaryData = [
     { title: 'Ahorro Total', value: `$${statistics.totalSavings.toLocaleString()}`, icon: DollarSign, color: 'var(--color-progress)' },
     { title: 'Metas Activas', value: statistics.activeGoals.toString(), icon: Bookmark, color: 'var(--color-accent)' },
@@ -153,12 +295,12 @@ const Workspace = () => {
     );
   }
 
-  // Componente GoalCard actualizado
+  // Componente GoalCard
   const GoalCard: React.FC<GoalCardProps> = ({ goal, isTeam = false }) => {
     const progress = Math.round((goal.savedAmount / goal.targetAmount) * 100);
     
     return (
-      <div className="goal-card">
+      <div className="goal-card slider-card">
         <div className="goal-card-header">
           <div className="goal-card-icon">
             <Bookmark size={20} />
@@ -290,29 +432,25 @@ const Workspace = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <div className="section-header">
-              <h2>Mis Metas Individuales</h2>
-              <Link to="/targets" className="section-link">Ver todas</Link>
-            </div>
-            <div className="goals-list">
-              {individualGoals.length === 0 ? (
-                <div className="empty-state">No tienes metas individuales aún. ¡Crea tu primera meta!</div>
-              ) : (
-                individualGoals.map((goal: IndividualGoal) => <GoalCard key={goal.id} goal={goal} />)
-              )}
-            </div>
+            <GoalsSlider 
+              title="Mis Metas Individuales"
+              viewAllLink="/targets"
+              emptyMessage="No tienes metas individuales aún. ¡Crea tu primera meta!"
+            >
+              {individualGoals.map((goal: IndividualGoal) => (
+                <GoalCard key={goal.id} goal={goal} />
+              ))}
+            </GoalsSlider>
             
-            <div className="section-header">
-              <h2>Metas en Equipo</h2>
-              <Link to="/teamboard" className="section-link">Ver todas</Link>
-            </div>
-            <div className="goals-list">
-              {teamGoals.length === 0 ? (
-                <div className="empty-state">No tienes metas en equipo aún. ¡Crea o únete a una meta grupal!</div>
-              ) : (
-                teamGoals.map((goal: TeamGoal) => <GoalCard key={goal.id} goal={goal} isTeam />)
-              )}
-            </div>
+            <GoalsSlider 
+              title="Metas en Equipo"
+              viewAllLink="/teamboard"
+              emptyMessage="No tienes metas en equipo aún. ¡Crea o únete a una meta grupal!"
+            >
+              {teamGoals.map((goal: TeamGoal) => (
+                <GoalCard key={goal.id} goal={goal} isTeam />
+              ))}
+            </GoalsSlider>
           </motion.div>
           
           <motion.div 
