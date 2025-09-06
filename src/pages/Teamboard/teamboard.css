@@ -746,3 +746,282 @@
     flex-direction: column;
   }
 }
+/* Sección de miembros del equipo */
+.team-members-section {
+  margin-bottom: 2rem;
+}
+
+.team-members-list {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.member-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  min-width: 200px;
+}
+
+.member-card.current-user {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.member-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.member-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.member-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.member-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.9rem;
+}
+
+.member-email {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+/* Avatares pequeños en las metas */
+.goal-members {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 1rem 0;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.members-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.members-avatars {
+  display: flex;
+  gap: -0.5rem;
+}
+
+.member-avatar-small {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 2px solid white;
+  margin-left: -0.5rem;
+  position: relative;
+}
+
+.member-avatar-small:first-child {
+  margin-left: 0;
+}
+
+.member-avatar-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.member-avatar-small.more-members {
+  background: #e2e8f0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+/* Contribución personal */
+.personal-contribution {
+  background: #f8fafc;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.contribution-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.contribution-label {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.contribution-amount {
+  font-weight: 600;
+  color: #059669;
+  font-size: 0.9rem;
+}
+
+.contribution-percentage {
+  text-align: right;
+}
+
+.contribution-percentage span {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+/* Botones de acción en las metas */
+.goal-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.btn-contribute {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #059669;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-contribute:hover {
+  background: #047857;
+  transform: translateY(-1px);
+}
+
+.btn-contribute-submit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #059669;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-contribute-submit:hover {
+  background: #047857;
+}
+
+/* Meta completada */
+.goal-completed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 8px;
+  font-weight: 500;
+  margin-top: 1rem;
+}
+
+/* Información del formulario */
+.form-info {
+  padding: 1rem;
+  background: #eff6ff;
+  border-radius: 8px;
+  border-left: 4px solid #3b82f6;
+  margin-bottom: 1rem;
+}
+
+.form-info p {
+  margin: 0;
+  color: #1e40af;
+  font-size: 0.9rem;
+}
+
+.form-help {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+/* Mejoras para las tarjetas de meta */
+.team-goal-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.team-goal-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .team-members-list {
+    flex-direction: column;
+  }
+  
+  .member-card {
+    min-width: auto;
+  }
+  
+  .goal-members {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .members-avatars {
+    align-self: flex-end;
+  }
+  
+  .contribution-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .contribution-percentage {
+    text-align: left;
+  }
+}

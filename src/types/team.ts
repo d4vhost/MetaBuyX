@@ -13,6 +13,7 @@ export interface TeamGoal {
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;
   isCompleted: boolean;
+  membersInfo?: TeamMember[]; // Información detallada de los miembros
 }
 
 export interface TeamMember {
@@ -34,6 +35,6 @@ export interface TeamInvitation {
   acceptedAt?: Timestamp;
 }
 
-export type CreateTeamGoal = Omit<TeamGoal, 'id' | 'createdBy' | 'members' | 'memberContributions' | 'createdAt' | 'updatedAt' | 'isCompleted' | 'savedAmount'>;
+export type CreateTeamGoal = Omit<TeamGoal, 'id' | 'createdBy' | 'members' | 'memberContributions' | 'createdAt' | 'updatedAt' | 'isCompleted' | 'savedAmount' | 'membersInfo'>;
 
 export type CreateTeamInvitation = Omit<TeamInvitation, 'id' | 'status' | 'createdAt' | 'acceptedAt'>;
