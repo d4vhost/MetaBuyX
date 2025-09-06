@@ -75,3 +75,4 @@ export interface UserStatistics {
 export interface IndividualGoalWithSubGoals extends IndividualGoal {
   subGoals?: SubGoal[];
 }
+export * from './team';

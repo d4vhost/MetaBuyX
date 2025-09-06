@@ -1,6 +1,6 @@
 // src/pages/Workspace/workspace.tsx - Versión completa con slider actualizado
 import { motion } from 'framer-motion';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   LayoutDashboard, Users, CheckSquare, Settings, LogOut, PlusCircle, Search,
   DollarSign, TrendingUp, Loader, Menu, X, Award, Bookmark, User, ChevronLeft, ChevronRight
@@ -173,8 +173,8 @@ const Workspace = () => {
       }
     };
 
-    // Detectar cambios en el scroll manual
-    const handleScroll = () => {
+    // Detectar cambios en el scroll manual - Memoizada con useCallback
+    const handleScroll = useCallback(() => {
       if (sliderRef.current) {
         const containerWidth = sliderRef.current.clientWidth;
         const scrollLeft = sliderRef.current.scrollLeft;
@@ -183,7 +183,7 @@ const Workspace = () => {
           setCurrentIndex(newIndex);
         }
       }
-    };
+    }, [currentIndex]);
 
     useEffect(() => {
       const slider = sliderRef.current;
@@ -191,7 +191,7 @@ const Workspace = () => {
         slider.addEventListener('scroll', handleScroll);
         return () => slider.removeEventListener('scroll', handleScroll);
       }
-    }, [currentIndex]);
+    }, [handleScroll]); // Ahora handleScroll está incluida en las dependencias
 
     if (childrenArray.length === 0) {
       return (
