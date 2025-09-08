@@ -358,6 +358,15 @@ export const quickListService = {
     }
   },
 
+  // Actualizar texto de un item de lista rápida
+  async updateQuickListItem(userId: string, itemId: string, newText: string): Promise<void> {
+    const itemRef = doc(db, 'users', userId, 'items', itemId);
+    await updateDoc(itemRef, {
+      text: newText,
+      updatedAt: serverTimestamp(),
+    });
+  },
+
   // Eliminar item de lista rápida
   async deleteQuickListItem(userId: string, itemId: string): Promise<void> {
     const itemRef = doc(db, 'users', userId, 'items', itemId);

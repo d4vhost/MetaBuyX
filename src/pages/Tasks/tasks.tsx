@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Users, CheckSquare, Settings, LogOut, 
-  Menu, X, User, Plus, Trash2, Check, Target, ShoppingCart,
-  DollarSign
+  Menu, X, User, Plus, Trash2, Edit3, Target
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useUserData } from '../../hooks/useUserData';
@@ -14,15 +13,16 @@ import './tasks.css';
 
 const Tasks: React.FC = () => {
   const { currentUser, logout } = useAuth();
-  const { quickListItems, addQuickListItem, toggleQuickListItem, deleteQuickListItem, loading } = useUserData();
+  const { quickListItems, addQuickListItem, toggleQuickListItem, deleteQuickListItem, updateQuickListItem, loading } = useUserData();
   const navigate = useNavigate();
   const location = useLocation();
   
   // Estados para el sidebar y formulario
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<string | null>(null);
   const [newItemText, setNewItemText] = useState('');
-  const [newItemPrice, setNewItemPrice] = useState('');
+  const [editText, setEditText] = useState('');
   
   const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Usuario';
   const userEmail = currentUser?.email || '';
@@ -32,12 +32,9 @@ const Tasks: React.FC = () => {
     e.preventDefault();
     if (!newItemText.trim()) return;
     
-    const price = parseFloat(newItemPrice) || 0;
-    
     try {
-      await addQuickListItem(newItemText.trim(), price);
+      await addQuickListItem(newItemText.trim(), 0);
       setNewItemText('');
-      setNewItemPrice('');
       setShowAddModal(false);
     } catch (error) {
       console.error('Error agregando item:', error);
@@ -64,6 +61,31 @@ const Tasks: React.FC = () => {
     }
   };
 
+  // Iniciar edición
+  const startEditing = (item: { id: string; text: string; completed: boolean; price: number }) => {
+    setEditingItem(item.id);
+    setEditText(item.text);
+  };
+
+  // Cancelar edición
+  const cancelEditing = () => {
+    setEditingItem(null);
+    setEditText('');
+  };
+
+  // Guardar edición
+  const saveEdit = async (itemId: string) => {
+    if (!editText.trim()) return;
+    
+    try {
+      await updateQuickListItem(itemId, editText.trim());
+      setEditingItem(null);
+      setEditText('');
+    } catch (error) {
+      console.error('Error actualizando item:', error);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -80,37 +102,28 @@ const Tasks: React.FC = () => {
     { icon: CheckSquare, label: 'Listas', path: '/tasks' },
   ];
 
-  // Estadísticas de la lista
-  const totalItems = quickListItems.length;
-  const completedItems = quickListItems.filter(item => item.completed).length;
-  const totalValue = quickListItems.reduce((sum, item) => sum + item.price, 0);
-  const completedValue = quickListItems.filter(item => item.completed).reduce((sum, item) => sum + item.price, 0);
-
   if (loading) {
     return (
       <div className="tasks-layout">
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p>Cargando listas...</p>
-        </div>
+        <div className="loading">Cargando...</div>
       </div>
     );
   }
 
   return (
     <div className="tasks-layout">
-      {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>}
+      {isSidebarOpen && <div className="overlay" onClick={() => setIsSidebarOpen(false)}></div>}
       
-      <aside className={`tasks-sidebar ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <img src={metaBuyLogo} alt="MetaBuy Logo" className="brand-logo" />
-          <span className="brand-text">MetaBuyX</span>
-          <button className="sidebar-close" onClick={() => setIsSidebarOpen(false)}>
+          <img src={metaBuyLogo} alt="MetaBuy" className="logo" />
+          <span className="brand">MetaBuyX</span>
+          <button className="close-btn" onClick={() => setIsSidebarOpen(false)}>
             <X size={20} />
           </button>
         </div>
         
-        <nav className="sidebar-nav">
+        <nav className="nav">
           {navItems.map((item, index) => (
             <Link 
               key={index} 
@@ -133,187 +146,146 @@ const Tasks: React.FC = () => {
             <LogOut size={20} />
             <span>Cerrar Sesión</span>
           </button>
-          <div className="user-profile">
-            <div className="user-avatar">
+          <div className="user-info">
+            <div className="avatar">
               {currentUser?.photoURL ? (
                 <img src={currentUser.photoURL} alt={userName} />
               ) : (
                 <User size={20} />
               )}
             </div>
-            <div className="user-info">
-              <span className="user-name">{userName}</span>
-              <span className="user-email">{userEmail}</span>
+            <div>
+              <div className="name">{userName}</div>
+              <div className="email">{userEmail}</div>
             </div>
           </div>
         </div>
       </aside>
 
-      <main className="tasks-main">
-        <header className="tasks-header">
-          <div className="header-content">
-            <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(true)}>
-              <Menu size={24} />
-            </button>
-            <div className="header-info">
-              <h1 className="header-title">Mis Listas</h1>
-              <p className="header-subtitle">
-                Organiza tus compras y tareas pendientes de forma rápida
-              </p>
-            </div>
+      <main className="main">
+        <header className="header">
+          <button className="menu-btn" onClick={() => setIsSidebarOpen(true)}>
+            <Menu size={24} />
+          </button>
+          <div>
+            <h1>Listas Rápidas</h1>
+            <p>Organiza tus notas y tareas</p>
           </div>
-          
-          <div className="header-actions">
-            <button 
-              className="btn-add-item" 
-              onClick={() => setShowAddModal(true)}
-            >
-              <Plus size={18} />
-              Agregar Elemento
-            </button>
-          </div>
+          <button className="add-btn" onClick={() => setShowAddModal(true)}>
+            <Plus size={18} />
+            Agregar
+          </button>
         </header>
 
-        <div className="tasks-content">
-          {/* Estadísticas de la lista */}
-          {totalItems > 0 && (
-            <section className="tasks-stats">
-              <div className="stats-grid">
-                <div className="stat-card">
-                  <div className="stat-icon">
-                    <CheckSquare size={24} />
-                  </div>
-                  <div className="stat-info">
-                    <span className="stat-number">{completedItems}/{totalItems}</span>
-                    <span className="stat-label">Completados</span>
-                  </div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-icon">
-                    <DollarSign size={24} />
-                  </div>
-                  <div className="stat-info">
-                    <span className="stat-number">${totalValue.toLocaleString()}</span>
-                    <span className="stat-label">Valor Total</span>
-                  </div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-icon">
-                    <ShoppingCart size={24} />
-                  </div>
-                  <div className="stat-info">
-                    <span className="stat-number">${completedValue.toLocaleString()}</span>
-                    <span className="stat-label">Ya Comprado</span>
-                  </div>
-                </div>
-              </div>
-            </section>
-          )}
-
-          {/* Lista de elementos */}
-          <section className="tasks-list-section">
-            <div className="section-header">
-              <h2 className="section-title">Lista Rápida</h2>
-              {totalItems > 0 && (
-                <span className="items-count">{totalItems} elemento{totalItems !== 1 ? 's' : ''}</span>
-              )}
+        <div className="content">
+          {quickListItems.length === 0 ? (
+            <div className="empty">
+              <CheckSquare size={48} />
+              <h3>Lista vacía</h3>
+              <p>Agrega elementos para comenzar</p>
+              <button className="create-btn" onClick={() => setShowAddModal(true)}>
+                <Plus size={18} />
+                Crear primer elemento
+              </button>
             </div>
-            
-            {quickListItems.length === 0 ? (
-              <div className="empty-state">
-                <CheckSquare size={64} className="empty-icon" />
-                <h3>Tu lista está vacía</h3>
-                <p>Agrega elementos a tu lista rápida para no olvidar nada importante.</p>
-                <button 
-                  className="btn-create-first"
-                  onClick={() => setShowAddModal(true)}
+          ) : (
+            <div className="list">
+              {quickListItems.map((item) => (
+                <motion.div 
+                  key={item.id}
+                  className={`item ${item.completed ? 'completed' : ''}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  layout
                 >
-                  <Plus size={20} />
-                  Agregar primer elemento
-                </button>
-              </div>
-            ) : (
-              <div className="tasks-list">
-                {quickListItems.map((item) => (
-                  <motion.div 
-                    key={item.id}
-                    className={`task-item ${item.completed ? 'completed' : ''}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    layout
-                  >
-                    <div className="task-content">
-                      <button 
-                        className="task-checkbox"
-                        onClick={() => handleToggleItem(item.id)}
-                      >
-                        {item.completed && <Check size={16} />}
-                      </button>
-                      <div className="task-info">
-                        <span className="task-text">{item.text}</span>
-                        {item.price > 0 && (
-                          <span className="task-price">${item.price.toLocaleString()}</span>
-                        )}
-                      </div>
-                    </div>
+                  <div className="item-content">
                     <button 
-                      className="task-delete"
-                      onClick={() => handleDeleteItem(item.id)}
-                      title="Eliminar elemento"
+                      className="checkbox"
+                      onClick={() => handleToggleItem(item.id)}
                     >
-                      <Trash2 size={16} />
+                      {item.completed && <CheckSquare size={16} />}
+                      {!item.completed && <div className="empty-check" />}
                     </button>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </section>
+                    
+                    {editingItem === item.id ? (
+                      <input
+                        type="text"
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') saveEdit(item.id);
+                          if (e.key === 'Escape') cancelEditing();
+                        }}
+                        onBlur={() => saveEdit(item.id)}
+                        autoFocus
+                        className="edit-input"
+                      />
+                    ) : (
+                      <span className="text">{item.text}</span>
+                    )}
+                  </div>
+                  
+                  <div className="actions">
+                    {editingItem === item.id ? (
+                      <>
+                        <button onClick={() => saveEdit(item.id)} className="save-btn">
+                          <CheckSquare size={16} />
+                        </button>
+                        <button onClick={cancelEditing} className="cancel-btn">
+                          <X size={16} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button 
+                          onClick={() => startEditing(item)}
+                          className="edit-btn"
+                        >
+                          <Edit3 size={16} />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteItem(item.id)}
+                          className="delete-btn"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </main>
 
       {/* Modal para agregar elemento */}
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Agregar Elemento</h3>
-              <button className="modal-close" onClick={() => setShowAddModal(false)}>
+              <button onClick={() => setShowAddModal(false)}>
                 <X size={20} />
               </button>
             </div>
             <form onSubmit={handleAddItem}>
               <div className="form-group">
-                <label htmlFor="itemText">Elemento</label>
+                <label>Elemento</label>
                 <input
-                  id="itemText"
                   type="text"
                   value={newItemText}
                   onChange={(e) => setNewItemText(e.target.value)}
-                  placeholder="Ej: Comprar leche"
+                  placeholder="Escribe aquí..."
                   required
                   autoFocus
                 />
               </div>
-              <div className="form-group">
-                <label htmlFor="itemPrice">Precio estimado (opcional)</label>
-                <input
-                  id="itemPrice"
-                  type="number"
-                  value={newItemPrice}
-                  onChange={(e) => setNewItemPrice(e.target.value)}
-                  placeholder="0.00"
-                  min="0"
-                  step="0.01"
-                />
-                <p className="form-help">
-                  Agrega un precio estimado para llevar control de tus gastos.
-                </p>
-              </div>
-              <div className="modal-actions">
-                <button type="button" className="btn-cancel" onClick={() => setShowAddModal(false)}>
+              <div className="form-actions">
+                <button type="button" className="cancel" onClick={() => setShowAddModal(false)}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-add">
+                <button type="submit" className="submit">
                   <Plus size={16} />
                   Agregar
                 </button>

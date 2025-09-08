@@ -143,6 +143,18 @@ export const useUserData = () => {
     }
   }, [currentUser, loadUserData]);
 
+  const updateQuickListItem = useCallback(async (itemId: string, newText: string): Promise<void> => {
+    if (!currentUser) return;
+    
+    try {
+      await quickListService.updateQuickListItem(currentUser.uid, itemId, newText);
+      await loadUserData();
+    } catch (error) {
+      console.error('Error updating quick list item:', error);
+      throw error;
+    }
+  }, [currentUser, loadUserData]);
+
   const deleteQuickListItem = useCallback(async (itemId: string): Promise<void> => {
     if (!currentUser) return;
     
@@ -179,6 +191,7 @@ export const useUserData = () => {
     contributeToTeamGoal,
     addQuickListItem,
     toggleQuickListItem,
+    updateQuickListItem, // Nueva función agregada
     deleteQuickListItem
   };
 };
