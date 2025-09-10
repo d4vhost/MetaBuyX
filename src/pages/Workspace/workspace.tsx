@@ -137,7 +137,7 @@ const Workspace = () => {
     );
   };
 
-  // Componente Slider actualizado con navegación superpuesta
+  // Componente GoalsSlider corregido - Extraer solo esta parte del código
   const GoalsSlider: React.FC<SliderProps> = ({ children, title, viewAllLink, emptyMessage }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -191,7 +191,7 @@ const Workspace = () => {
         slider.addEventListener('scroll', handleScroll);
         return () => slider.removeEventListener('scroll', handleScroll);
       }
-    }, [handleScroll]); // Ahora handleScroll está incluida en las dependencias
+    }, [handleScroll]);
 
     if (childrenArray.length === 0) {
       return (
@@ -211,8 +211,11 @@ const Workspace = () => {
           <h2>{title}</h2>
           <Link to={viewAllLink} className="section-link">Ver todas</Link>
         </div>
+        
+        {/* ESTRUCTURA CORREGIDA: Contenedor principal con navegación */}
         <div className="goals-slider-container-with-nav">
-          {/* Flecha izquierda */}
+          
+          {/* Flecha izquierda - HERMANA del slider-wrapper */}
           {totalSlides > 1 && (
             <button 
               className={`slider-nav-btn slider-nav-left ${!canScrollLeft ? 'disabled' : ''}`}
@@ -224,50 +227,52 @@ const Workspace = () => {
             </button>
           )}
 
-          {/* Slider */}
-          <div className="goals-slider" ref={sliderRef}>
-            {childrenArray.map((child, index) => (
-              <div key={index} className="slider-card">
-                {child}
-              </div>
-            ))}
+          {/* Contenedor del slider - HERMANO de las flechas */}
+          <div className="goals-slider-wrapper">
+            <div className="goals-slider" ref={sliderRef}>
+              {childrenArray.map((child, index) => (
+                <div key={index} className="slider-card">
+                  {child}
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Flecha derecha */}
+          {/* Flecha derecha - HERMANA del slider-wrapper */}
           {totalSlides > 1 && (
             <button 
               className={`slider-nav-btn slider-nav-right ${!canScrollRight ? 'disabled' : ''}`}
               onClick={() => scrollTo('right')}
               disabled={!canScrollRight}
               aria-label="Deslizar hacia la derecha"
-            >
+              >
               <ChevronRight size={20} />
             </button>
           )}
-
-          {/* Indicadores de posición */}
-          {totalSlides > 1 && (
-            <div className="slider-indicators">
-              {Array.from({ length: totalSlides }).map((_, index) => (
-                <button
-                  key={index}
-                  className={`slider-indicator ${index === currentIndex ? 'active' : ''}`}
-                  onClick={() => {
-                    setCurrentIndex(index);
-                    if (sliderRef.current) {
-                      const containerWidth = sliderRef.current.clientWidth;
-                      sliderRef.current.scrollTo({
-                        left: index * containerWidth,
-                        behavior: 'smooth'
-                      });
-                    }
-                  }}
-                  aria-label={`Ir a la diapositiva ${index + 1}`}
-                />
-              ))}
-            </div>
-          )}
         </div>
+
+        {/* Indicadores - FUERA del contenedor principal */}
+        {totalSlides > 1 && (
+          <div className="slider-indicators">
+            {Array.from({ length: totalSlides }).map((_, index) => (
+              <button
+                key={index}
+                className={`slider-indicator ${index === currentIndex ? 'active' : ''}`}
+                onClick={() => {
+                  setCurrentIndex(index);
+                  if (sliderRef.current) {
+                    const containerWidth = sliderRef.current.clientWidth;
+                    sliderRef.current.scrollTo({
+                      left: index * containerWidth,
+                      behavior: 'smooth'
+                    });
+                  }
+                }}
+                aria-label={`Ir a la diapositiva ${index + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     );
   };
